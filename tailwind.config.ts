@@ -13,7 +13,26 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+      maxWidth: {
+        '8xl': '1440px',
+      },
       colors: {
+        positive: {
+          DEFAULT: "hsl(var(--positive))",
+          soft: "hsl(var(--positive-soft))",
+        },
+        negative: {
+          DEFAULT: "hsl(var(--negative))",
+          soft: "hsl(var(--negative-soft))",
+        },
+        neutral: {
+          DEFAULT: "hsl(var(--neutral))",
+          soft: "hsl(var(--neutral-soft))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
