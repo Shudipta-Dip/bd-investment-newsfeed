@@ -9,7 +9,7 @@ export const DashboardHeader = () => {
         </div>
         <div>
           <h1 className="text-base font-bold tracking-tight leading-none">
-            Intelligence Command
+            BD Investment Newsfeed
           </h1>
           <p className="text-[10px] font-mono uppercase text-muted-foreground mt-1">
             BIDA • BEZA • PPPA
