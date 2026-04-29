@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://YOUR_RENDER_URL_HERE.onrender.com/api/:path*"
+      "destination": "https://bd-investment-newsfeed.onrender.com/api/:path*"
     }
   ]
 }
