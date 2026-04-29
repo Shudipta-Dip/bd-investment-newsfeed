@@ -1,0 +1,9 @@
+test_*.js
+debug_*.js
+check_*.js
+run_*.js
+apply_*.js
+get_*.js
+fix_*.js
+*.json
+node_modules
