@@ -1,3 +1,4 @@
+import { useRef, useState, useCallback } from "react";
 import { Clock, Sparkles } from "lucide-react";
 import { SentimentBadge } from "./SentimentBadge";
 import type { NewsItem } from "@/data/news";
@@ -23,14 +24,67 @@ export const NewsCard = ({
   item: NewsItem;
 }) => {
   const magnitude = impactLabel(item.impact);
-  const isGlobal = item.region !== "Bangladesh";
+
+  const cardRef = useRef<HTMLAnchorElement>(null);
+  const [transform, setTransform] = useState(
+    "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)"
+  );
+  const [spotlightPos, setSpotlightPos] = useState({ x: 50, y: 50 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const tiltLimit = 10;
+  const scale = 1.02;
+  const perspective = 1000;
+  const effect = "evade";
+  const spotlight = true;
+
+  const dir = effect === "evade" ? -1 : 1;
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const el = cardRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;
+      const py = (e.clientY - rect.top) / rect.height;
+      const xRot = (py - 0.5) * (tiltLimit * 2) * dir;
+      const yRot = (px - 0.5) * -(tiltLimit * 2) * dir;
+      setTransform(
+        `perspective(${perspective}px) rotateX(${xRot}deg) rotateY(${yRot}deg) scale3d(${scale}, ${scale}, ${scale})`
+      );
+      if (spotlight) {
+        setSpotlightPos({ x: px * 100, y: py * 100 });
+      }
+    },
+    [tiltLimit, scale, perspective, dir, spotlight]
+  );
+
+  const handlePointerEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handlePointerLeave = useCallback(() => {
+    setTransform(
+      `perspective(${perspective}px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`
+    );
+    setIsHovered(false);
+  }, [perspective]);
 
   return (
     <a
+      ref={cardRef}
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group text-left bg-card border border-border rounded-lg p-6 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all block"
+      onPointerEnter={handlePointerEnter}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      className="will-change-transform group text-left bg-card border border-border rounded-lg p-6 shadow-card hover:shadow-card-hover hover:border-primary/30 relative overflow-hidden block"
+      style={{
+        transform,
+        transition: isHovered ? "transform 0.15s ease-out" : "transform 0.4s ease-out",
+        transformStyle: "preserve-3d",
+      }}
     >
       <div className="flex justify-between items-start mb-4 gap-3">
         <SentimentBadge sentiment={item.sentiment} />
@@ -56,7 +110,7 @@ export const NewsCard = ({
       <p className="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-3">
         {item.snippet}
       </p>
-      <div className="flex items-center justify-between pt-4 border-t border-border">
+      <div className="flex items-center justify-between pt-4 border-t border-border z-20 relative">
         <div className="flex items-center gap-2">
           <span className={`text-[10px] font-mono font-bold uppercase ${magnitude.color}`}>
             {magnitude.text}
@@ -75,6 +129,24 @@ export const NewsCard = ({
           {item.region}
         </span>
       </div>
+
+      {spotlight && (
+        <div
+          className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+          style={{ opacity: isHovered ? 1 : 0, transition: "opacity 0.3s" }}
+        >
+          <div
+            className="absolute w-[200%] h-[200%] rounded-full opacity-100 dark:opacity-50"
+            style={{
+              left: `${spotlightPos.x}%`,
+              top: `${spotlightPos.y}%`,
+              transform: "translate(-50%, -50%)",
+              background:
+                "radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 40%)",
+            }}
+          />
+        </div>
+      )}
     </a>
   );
 };
