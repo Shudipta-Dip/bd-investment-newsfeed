@@ -218,6 +218,53 @@ async function purgeOldArticles() {
   return { count: data?.length || 0, error };
 }
 
+const ALERT_TABLE = 'alert_subscriptions';
+
+/**
+ * Upsert a subscription record.
+ */
+async function subscribeEmail(email, thresholdScore) {
+  if (!supabase) return { data: null, error: 'Database not configured' };
+
+  const { data, error } = await supabase
+    .from(ALERT_TABLE)
+    .upsert({ email, threshold_score: thresholdScore }, { onConflict: 'email,threshold_score' })
+    .select();
+
+  return { data: data?.[0] || null, error };
+}
+
+/**
+ * Get all active subscriptions.
+ */
+async function getActiveSubscriptions() {
+  if (!supabase) return { data: [], error: 'Database not configured' };
+
+  const { data, error } = await supabase
+    .from(ALERT_TABLE)
+    .select('*');
+
+  return { data: data || [], error };
+}
+
+/**
+ * Update the trigger timestamp and score to prevent repeat alert spam.
+ */
+async function updateSubscriptionTrigger(id, score) {
+  if (!supabase) return { data: null, error: 'Database not configured' };
+
+  const { data, error } = await supabase
+    .from(ALERT_TABLE)
+    .update({ 
+      last_triggered_at: new Date().toISOString(),
+      last_triggered_score: score
+    })
+    .eq('id', id)
+    .select();
+
+  return { data: data?.[0] || null, error };
+}
+
 module.exports = {
   getArticles,
   getArticleById,
@@ -226,4 +273,7 @@ module.exports = {
   updateArticle,
   getStats,
   purgeOldArticles,
+  subscribeEmail,
+  getActiveSubscriptions,
+  updateSubscriptionTrigger,
 };
