@@ -170,6 +170,39 @@ const getExecutiveSummary = async (_req, res) => {
   }
 };
 
+/**
+ * POST /api/alerts/subscribe
+ * Register an email for conditional climate score alerts.
+ * Expects JSON body: { email: string, threshold_score: number }
+ */
+const subscribeAlert = async (req, res) => {
+  try {
+    const { email, threshold_score } = req.body;
+
+    // Validate email format
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+
+    // Validate threshold
+    const score = parseInt(threshold_score, 10);
+    if (isNaN(score) || score < 0 || score > 100) {
+      return res.status(400).json({ success: false, error: 'Threshold score must be a number between 0 and 100.' });
+    }
+
+    const { data, error } = await models.subscribeEmail(email, score);
+
+    if (error) {
+      return res.status(500).json({ success: false, error });
+    }
+
+    res.status(201).json({ success: true, data, message: `Alert registered: you will be notified when the climate score drops below ${score}.` });
+  } catch (err) {
+    console.error('Error subscribing alert:', err);
+    res.status(500).json({ success: false, error: 'Failed to register alert subscription.' });
+  }
+};
+
 module.exports = {
   healthCheck,
   getNews,
@@ -179,4 +212,5 @@ module.exports = {
   getStats,
   scrapeNews,
   getExecutiveSummary,
+  subscribeAlert,
 };

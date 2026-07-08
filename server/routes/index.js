@@ -26,4 +26,9 @@ router.get('/executive-summary', controllers.getExecutiveSummary);
 // ---------------------------------------------------------------------------
 // router.post('/scrape', controllers.scrapeNews); // Disabled for security reasons (run via run_live_scrape.js or cron instead)
 
+// ---------------------------------------------------------------------------
+// Alert Subscriptions
+// ---------------------------------------------------------------------------
+router.post('/alerts/subscribe', controllers.subscribeAlert);
+
 module.exports = router;

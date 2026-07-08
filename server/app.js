@@ -4,6 +4,7 @@ const cron = require('node-cron');
 const routes = require('./routes');
 const { scrapeAll } = require('./services/scraper');
 const { purgeOldArticles } = require('./models');
+const { checkAndDispatchAlerts } = require('./services/alertDispatcher');
 
 const app = express();
 
@@ -54,6 +55,9 @@ cron.schedule('0 */3 * * *', async () => {
   console.log('==================================================');
   try {
     await scrapeAll();
+
+    // Post-scrape: check alert subscriptions and dispatch emails
+    await checkAndDispatchAlerts();
   } catch (err) {
     console.error('CRON FAILED:', err);
   }
