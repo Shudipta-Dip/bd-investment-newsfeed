@@ -110,3 +110,18 @@ export async function fetchExecutiveSummary(): Promise<ExecutiveSummary> {
   }
   return json.data;
 }
+
+/** Subscribe to climate score drop email alerts */
+export async function subscribeToAlerts(email: string, thresholdScore: number): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/alerts/subscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, threshold_score: thresholdScore }),
+  });
+  const json = await res.json();
+  if (!json.success) {
+    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to register alert subscription";
+    throw new Error(errMsg);
+  }
+  return json;
+}
