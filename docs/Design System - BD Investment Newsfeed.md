@@ -8,7 +8,7 @@ This design system is tailored for the **BD Investment Newsfeed**, a high-stakes
 
 We use a dual-font system to separate editorial content from raw data and metrics.
 
-* **Primary Sans (UI & Headings):** Elma Sans. Utilitarian geometric sans-serif for quick scanning of international headlines.  
+* **Primary Sans (UI & Headings):** Sora. Utilitarian geometric sans-serif for quick scanning of international headlines.  
 * **Data Mono (Metrics & Sources):** JetBrains Mono. Used for "Narrative Impact" scores and technical source metadata.
 
 | Element | Font Weight | Size | Line Height |
