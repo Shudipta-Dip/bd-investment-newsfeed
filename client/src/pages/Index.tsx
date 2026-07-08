@@ -101,7 +101,7 @@ const Index = () => {
     : undefined;
   
   const sliderInfo = useMemo(() => getSliderMagnitudeInfo(magnitudeValue), [magnitudeValue]);
-  const apiMagnitude = sliderInfo.apiParam;
+  const apiMagnitude = magnitudeValue > 0 ? String(magnitudeValue) : undefined;
   
   const apiRegion = selectedRegions.size > 0 
     ? Array.from(selectedRegions).join(",") 

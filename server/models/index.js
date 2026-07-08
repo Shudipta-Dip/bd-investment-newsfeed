@@ -60,18 +60,23 @@ async function getArticles({ sentiment, search, region, magnitude, limit = 500 }
   if (error) return { data: [], error };
   data = data || [];
 
-  // Robust in-memory filtering for magnitude
+  // Robust in-memory filtering for magnitude (numeric score threshold or category strings)
   if (magnitude) {
-    const magnitudes = magnitude.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
-    if (magnitudes.length > 0) {
-      data = data.filter(a => {
-        const score = a.impact_score || 0;
-        if (magnitudes.includes('systemic') && score >= 90) return true;
-        if (magnitudes.includes('sectoral') && score >= 70 && score < 90) return true;
-        if (magnitudes.includes('notable') && score >= 30 && score < 70) return true;
-        if (magnitudes.includes('routine') && score < 30) return true;
-        return false;
-      });
+    const minScore = parseInt(magnitude, 10);
+    if (!isNaN(minScore)) {
+      data = data.filter(a => (a.impact_score || 0) >= minScore);
+    } else {
+      const magnitudes = magnitude.split(',').map(m => m.trim().toLowerCase()).filter(Boolean);
+      if (magnitudes.length > 0) {
+        data = data.filter(a => {
+          const score = a.impact_score || 0;
+          if (magnitudes.includes('systemic') && score >= 90) return true;
+          if (magnitudes.includes('sectoral') && score >= 70 && score < 90) return true;
+          if (magnitudes.includes('notable') && score >= 30 && score < 70) return true;
+          if (magnitudes.includes('routine') && score < 30) return true;
+          return false;
+        });
+      }
     }
   }
 
