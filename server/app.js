@@ -25,7 +25,9 @@ app.use(cors({
     // Allow server-to-server or curl requests (no Origin header)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    const isVercel = origin.endsWith('.vercel.app') || origin.includes('vercel.app');
+    
+    if (allowedOrigins.includes(origin) || isVercel || process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
     
