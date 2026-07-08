@@ -120,22 +120,49 @@ const Index = () => {
   const exportToCSV = () => {
     if (!rawArticles || rawArticles.length === 0) return;
 
+    const escapeCSV = (val: any) => {
+      const stringVal = val === null || val === undefined ? "" : String(val);
+      return `"${stringVal.replace(/"/g, '""')}"`;
+    };
+
     const headers = ["Title", "Date", "Source", "Sentiment", "Impact", "Region", "URL"];
     const rows = rawArticles.map(a => [
-      `"${a.title.replace(/"/g, '""')}"`,
-      new Date(a.published_at).toLocaleString(),
-      `"${a.source}"`,
-      a.sentiment,
-      a.impact_score,
-      `"${a.region || ''}"`,
-      `"${a.url}"`
+      escapeCSV(a.title),
+      escapeCSV(new Date(a.published_at).toLocaleString()),
+      escapeCSV(a.source),
+      escapeCSV(a.sentiment),
+      escapeCSV(a.impact_score),
+      escapeCSV(a.region),
+      escapeCSV(a.url)
     ]);
 
     const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
+    
+    // Construct descriptive filename based on active filters
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filenameSegments: string[] = ["bd-investment-news"];
+    
+    if (selectedRegions.size > 0) {
+      filenameSegments.push(Array.from(selectedRegions).join("-"));
+    }
+    if (selectedSentiments.size > 0) {
+      filenameSegments.push(Array.from(selectedSentiments).join("-"));
+    }
+    if (selectedMagnitudes.size > 0) {
+      filenameSegments.push(Array.from(selectedMagnitudes).join("-"));
+    }
+    if (searchQuery.trim()) {
+      const cleanSearch = searchQuery.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      if (cleanSearch) {
+        filenameSegments.push(`search-${cleanSearch}`);
+      }
+    }
+    filenameSegments.push(dateStr);
+    
     link.href = URL.createObjectURL(blob);
-    link.download = `bd-investment-news-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `${filenameSegments.join("-")}.csv`;
     link.click();
   };
 

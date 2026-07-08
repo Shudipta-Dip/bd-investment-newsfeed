@@ -24,6 +24,37 @@ const parser = new RSSParser({
 });
 
 /**
+ * Safely parse a date string and return an ISO string.
+ * Falls back to current time if missing or invalid.
+ */
+function parseSafeDate(dateStr) {
+  if (!dateStr) return new Date().toISOString();
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed.getTime())) {
+    return new Date().toISOString();
+  }
+  return parsed.toISOString();
+}
+
+/**
+ * Clean URL of tracking parameters to ensure reliable deduplication.
+ */
+function cleanUrl(urlStr) {
+  if (!urlStr) return '';
+  try {
+    const url = new URL(urlStr.trim());
+    const trackingParams = [
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+      'ref', 'rss', 'feed', 'feedburner', 'cmp', 'origin'
+    ];
+    trackingParams.forEach(param => url.searchParams.delete(param));
+    return url.toString();
+  } catch (e) {
+    return urlStr.trim();
+  }
+}
+
+/**
  * Process a list of items (from RSS or HTML) through the relevance filter.
  */
 function filterItems(items, source) {
@@ -31,22 +62,20 @@ function filterItems(items, source) {
   for (const item of items) {
     const title = item.title || '';
     const snippet = item.contentSnippet || item.content || item.summary || '';
-    const url = item.link || item.guid || '';
+    const url = cleanUrl(item.link || item.guid || '');
 
     if (!url) continue;
     if (!isRelevant(title, snippet, source.region)) continue;
 
     validArticles.push({
       title: title.trim().slice(0, 500),
-      url: url.trim(),
+      url: url,
       source: source.name,
       snippet: snippet.trim().slice(0, 1000) || null,
       sentiment: tagSentiment(title, snippet),
       impact_score: scoreImpact(title, snippet),
       region: source.region,
-      published_at: item.pubDate
-        ? new Date(item.pubDate).toISOString()
-        : new Date().toISOString(),
+      published_at: parseSafeDate(item.pubDate),
     });
   }
   return validArticles;

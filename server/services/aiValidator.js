@@ -29,6 +29,74 @@ let currentKeyIndex = 0;
 let currentGroqIndex = 0;
 
 /**
+ * Safely parses LLM response text into a JSON array, with fallbacks for
+ * common formatting errors (single quotes, outer wrapping objects, markdown block markers, and truncation).
+ */
+function parseJsonArraySafe(text) {
+  if (!text) return [];
+  let cleaned = text.trim();
+
+  // Strip markdown code fences if present
+  cleaned = cleaned.replace(/^```json\s*/i, '')
+                   .replace(/^```\s*/i, '')
+                   .replace(/```\s*$/i, '')
+                   .trim();
+
+  // Handle nested array in an outer wrapper object, e.g. {"results": [...]}
+  if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+    try {
+      const obj = JSON.parse(cleaned);
+      for (const key of Object.keys(obj)) {
+        if (Array.isArray(obj[key])) {
+          return obj[key];
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Attempt direct standard parse
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) return parsed;
+  } catch (_) {}
+
+  // Attempt single quote replacement fallback
+  try {
+    const doubleQuoted = cleaned.replace(/'/g, '"');
+    const parsed = JSON.parse(doubleQuoted);
+    if (Array.isArray(parsed)) return parsed;
+  } catch (_) {}
+
+  // Attempt regex array extraction
+  try {
+    const match = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (_) {}
+
+  // Attempt partial recovery for truncated/malformed outputs (extract valid objects)
+  try {
+    const objects = [];
+    const regex = /\{[^{}]*\}/g;
+    let match;
+    while ((match = regex.exec(cleaned)) !== null) {
+      try {
+        const obj = JSON.parse(match[0].replace(/'/g, '"'));
+        if (obj && typeof obj === 'object') {
+          objects.push(obj);
+        }
+      } catch (_) {}
+    }
+    if (objects.length > 0) return objects;
+  } catch (_) {}
+
+  return [];
+}
+
+
+/**
  * Build a Groq client instance with API key rotation.
  */
 function getRotatedGroq() {
@@ -64,13 +132,11 @@ function getRotatedModel(purpose = 'validation') {
   }
 
   // Spread quota: 'analysis' tasks use a different key than 'validation'
-  let keyIdx;
+  let keyIdx = currentKeyIndex % keys.length;
   if (purpose === 'analysis' && keys.length >= 2) {
     keyIdx = (currentKeyIndex + 1) % keys.length;
-  } else {
-    keyIdx = currentKeyIndex % keys.length;
-    currentKeyIndex++;
   }
+  currentKeyIndex++;
 
   const genAI = new GoogleGenerativeAI(keys[keyIdx]);
   return genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
@@ -131,8 +197,9 @@ async function validateBatch(articles) {
 
     const prompt = `${VALIDATION_SYSTEM}
 
-Analyze ${chunk.length} headlines. For each RELEVANT article, return {"id", "sentiment", "impact"}.
-EXCLUDE irrelevant articles. Output ONLY a raw JSON array. No markdown, no explanation.
+Analyze ${chunk.length} headlines. Return a valid JSON array of objects for RELEVANT articles only.
+Format: [{"id": 0, "sentiment": "opportunity", "impact": 85}, ...]
+Do not wrap in an outer object. Do not include markdown code block syntax. Output ONLY a valid JSON array with double quotes. No commentary, no explanation.
 
 HEADLINES:
 ${payload}`;
@@ -142,11 +209,12 @@ ${payload}`;
         messages: [{ role: 'user', content: prompt }],
         model: 'llama-3.1-8b-instant',
         temperature: 0,
+        max_tokens: 1000,
       }));
       
-      const text = completion.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(text);
-      if (!Array.isArray(parsed)) throw new Error('Not an array');
+      const text = completion.choices[0].message.content;
+      const parsed = parseJsonArraySafe(text);
+      if (parsed.length === 0) throw new Error('No valid array items parsed');
 
       for (const entry of parsed) {
         const idx = entry.id;
@@ -213,21 +281,21 @@ ${a._fullText || a.snippet || 'Not available'}`
 
 2. Refine the impact score based on the full article content. A global article that reaches a wide international audience and shapes foreign investor perception should score higher than its headline alone might suggest.
 
-Return a raw JSON array of objects:
-  "id" (integer — article index)
-  "rationale" (string — the intelligence note, max 20 words, focus on Bangladesh's portrayal)
-  "impact" (integer — refined score 0-100, weight international reach and perception impact)
-
-Output ONLY the raw JSON array. No markdown, no explanation.
+Return a valid JSON array of objects:
+[
+  {"id": 0, "rationale": "note here...", "impact": 80},
+  ...
+]
+Do not wrap in an outer object. Do not include markdown code block syntax. Output ONLY a valid JSON array with double quotes. No commentary.
 
 ARTICLES:
 ${payload}`;
 
   try {
     const result = await retryWithBackoff(() => model.generateContent(prompt));
-    const text = result.response.text().trim().replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(text);
-    if (!Array.isArray(parsed)) throw new Error('Not an array');
+    const text = result.response.text();
+    const parsed = parseJsonArraySafe(text);
+    if (parsed.length === 0) throw new Error('No valid array items parsed');
 
     const articleUrlMap = new Map(articles.map((a, i) => [a.url, i]));
 
@@ -280,8 +348,8 @@ async function generateLocalRationale(articles) {
 
     const prompt = `For each Bangladesh business news headline below, write a concise intelligence note (max 15 words) explaining the practical business implication. Focus on who is affected and what changes.
 
-Return a raw JSON array: [{"id": 0, "rationale": "..."}, ...]
-Output ONLY the JSON array.
+Return a valid JSON array of objects: [{"id": 0, "rationale": "note here..."}, ...]
+Do not wrap in an outer object. Do not include markdown code block syntax. Output ONLY a valid JSON array with double quotes. No commentary.
 
 HEADLINES:
 ${payload}`;
@@ -291,11 +359,12 @@ ${payload}`;
         messages: [{ role: 'user', content: prompt }],
         model: 'llama-3.1-8b-instant',
         temperature: 0,
+        max_tokens: 1500,
       }), 2, 3000);
       
-      const text = completion.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(text);
-      if (!Array.isArray(parsed)) throw new Error('Not an array');
+      const text = completion.choices[0].message.content;
+      const parsed = parseJsonArraySafe(text);
+      if (parsed.length === 0) throw new Error('No valid array items parsed');
 
       for (const entry of parsed) {
         if (entry.id >= 0 && entry.id < chunk.length && entry.rationale) {
@@ -316,6 +385,21 @@ ${payload}`;
 // 4. EXECUTIVE CLIMATE SUMMARY (AI-powered dashboard header)
 // ============================================================================
 
+// In-memory cache for the executive summary to prevent Gemini rate limit exhaustion
+let summaryCache = {
+  fingerprint: null,
+  data: null,
+};
+
+/**
+ * Generate a deterministic fingerprint/hash key for a set of articles.
+ */
+function getArticlesFingerprint(articles) {
+  if (!articles || articles.length === 0) return '';
+  const sorted = [...articles].sort((a, b) => (a.url || '').localeCompare(b.url || ''));
+  return sorted.map(a => `${a.id || ''}-${a.sentiment || ''}-${a.impact_score || ''}-${a.action_taken ? 't' : 'f'}`).join('|');
+}
+
 /**
  * Generate an AI executive summary of the current investment climate.
  * Global articles receive 2x weight in the confidence score because
@@ -329,6 +413,13 @@ async function generateExecutiveSummary(articles) {
       narrative: 'Insufficient data to generate climate assessment.',
       weightedScore: 50,
     };
+  }
+
+  // 0. Check Content-Based Cache
+  const fingerprint = getArticlesFingerprint(articles);
+  if (summaryCache.fingerprint === fingerprint && summaryCache.data) {
+    console.log('♻️ Returning cached AI executive summary (fingerprint match)');
+    return summaryCache.data;
   }
 
   // 1. Calculate Group Scores
@@ -381,7 +472,7 @@ The assessment must be heavily driven by international perception.
 7-day snapshot:
 - Total: ${articles.length} articles (${globalArticles.length} international, ${localArticles.length} local)
 - Opportunities: ${opportunityCount} | Risks: ${riskCount} | Regulation: ${regulationCount}
-- Weighted confidence: ${weightedScore}/100 (Formula: 70% Global influence, 30% Local influence)
+- Current Climate Sentiment Score: ${weightedScore}/100
 
 Key International Narratives (Focus heavily on these intelligent notes):
 ${globalContext}
@@ -390,12 +481,22 @@ Write exactly 2 sentences:
 Sentence 1: State the overall investment climate and WHY, prioritizing the international narrative.
 Sentence 2: Highlight the single most important global signal or risk for foreign investors.
 
-Be specific. No fluff. No labels. Output ONLY the 2 sentences.`;
+CRITICAL INSTRUCTIONS:
+- Be specific. No fluff. No labels (do not write "Sentence 1:", "Sentence 2:", etc.).
+- Output ONLY the 2 sentences.
+- Do NOT mention any internal scoring formulas, weight splits (e.g., 70% or 30%), or system indicators. Focus purely on describing the economic and investment landscape itself.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await retryWithBackoff(() => model.generateContent(prompt));
     const narrative = result.response.text().trim();
-    return { narrative, weightedScore };
+    const summaryData = { narrative, weightedScore };
+    
+    // Only cache valid narratives (not the fallback error message)
+    if (narrative && narrative !== 'Climate assessment temporarily unavailable.') {
+      summaryCache = { fingerprint, data: summaryData };
+    }
+    
+    return summaryData;
   } catch (error) {
     console.error('Executive summary error:', error.message);
     return { narrative: 'Climate assessment temporarily unavailable.', weightedScore };

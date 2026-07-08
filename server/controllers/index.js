@@ -94,7 +94,14 @@ const createNews = async (req, res) => {
  */
 const updateNews = async (req, res) => {
   try {
-    const { data, error } = await models.updateArticle(req.params.id, req.body);
+    const { action_taken, action_note } = req.body;
+    
+    // Whitelist only action_taken and action_note for updates
+    const updates = {};
+    if (action_taken !== undefined) updates.action_taken = action_taken;
+    if (action_note !== undefined) updates.action_note = action_note;
+
+    const { data, error } = await models.updateArticle(req.params.id, updates);
 
     if (error) {
       return res.status(400).json({ success: false, error });

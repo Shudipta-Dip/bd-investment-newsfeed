@@ -11,8 +11,25 @@ const app = express();
 // Middleware
 // ---------------------------------------------------------------------------
 
-// Enable CORS so the React client (running on a different port) can reach us
-app.use(cors());
+// Restricted CORS configuration to prevent unauthorized origins from calling the API
+const allowedOrigins = [
+  ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : []),
+  'http://localhost:5173',
+  'http://localhost:3000',
+].map(o => o.trim()).filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow server-to-server or curl requests (no Origin header)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
 
 // Parse incoming JSON payloads
 app.use(express.json());

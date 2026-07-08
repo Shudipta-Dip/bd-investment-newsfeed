@@ -12,15 +12,38 @@ function confidenceLabel(score: number): { text: string; color: string } {
 
 export const SummaryStats = () => {
   const { data: stats, isLoading: statsLoading } = useStats();
-  const { data: executive, isLoading: execLoading } = useExecutiveSummary();
+  const { data: executive, isLoading: execLoading, isError: execError } = useExecutiveSummary();
 
   const total = stats?.total ?? 0;
   const opportunity = stats?.opportunity ?? 0;
   const risk = stats?.risk ?? 0;
   const regulation = stats?.regulation ?? 0;
 
-  const score = executive?.weightedScore ?? 50;
-  const label = confidenceLabel(score);
+  const score = executive?.weightedScore;
+  const hasData = score !== undefined && executive?.narrative !== 'Climate assessment temporarily unavailable.';
+
+  let labelText = "Mixed";
+  let labelColor = "text-yellow-500";
+  let scoreText = "50";
+  let progressWidth = 50;
+
+  if (execLoading) {
+    labelText = "Assessing...";
+    labelColor = "text-muted-foreground animate-pulse";
+    scoreText = "--";
+    progressWidth = 0;
+  } else if (execError || !hasData) {
+    labelText = "Unavailable";
+    labelColor = "text-muted-foreground";
+    scoreText = "--";
+    progressWidth = 0;
+  } else if (score !== undefined) {
+    const labelInfo = confidenceLabel(score);
+    labelText = labelInfo.text;
+    labelColor = labelInfo.color;
+    scoreText = score.toString();
+    progressWidth = score;
+  }
 
   if (statsLoading) {
     return (
@@ -45,18 +68,18 @@ export const SummaryStats = () => {
             </div>
 
             <div className="flex items-baseline gap-3 mb-4">
-              <span className={`text-3xl font-bold ${label.color}`}>
-                {label.text}
+              <span className={`text-3xl font-bold ${labelColor}`}>
+                {labelText}
               </span>
               <span className="text-sm font-mono text-muted-foreground">
-                {score}/100
+                {scoreText}/100
               </span>
             </div>
 
             <div className="h-1.5 w-full max-w-xs bg-muted rounded-full overflow-hidden mb-4">
               <div
                 className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-emerald-500 rounded-full transition-all duration-500"
-                style={{ width: `${score}%` }}
+                style={{ width: `${progressWidth}%` }}
               />
             </div>
 
@@ -65,13 +88,13 @@ export const SummaryStats = () => {
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Generating executive brief…
               </p>
-            ) : executive?.narrative ? (
-              <p className="text-sm text-foreground leading-relaxed max-w-2xl">
-                {executive.narrative}
+            ) : execError || !hasData ? (
+              <p className="text-sm text-muted-foreground italic">
+                Climate brief is temporarily unavailable. Check back in a few minutes.
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground italic">
-                Executive brief will appear after the next data refresh.
+              <p className="text-sm text-foreground leading-relaxed max-w-2xl">
+                {executive.narrative}
               </p>
             )}
           </div>

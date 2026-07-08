@@ -24,6 +24,6 @@ router.get('/executive-summary', controllers.getExecutiveSummary);
 // ---------------------------------------------------------------------------
 // RSS Scraper (trigger manually or via scheduled job)
 // ---------------------------------------------------------------------------
-router.post('/scrape', controllers.scrapeNews);
+// router.post('/scrape', controllers.scrapeNews); // Disabled for security reasons (run via run_live_scrape.js or cron instead)
 
 module.exports = router;
