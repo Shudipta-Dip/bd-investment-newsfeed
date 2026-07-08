@@ -58,7 +58,10 @@ export async function fetchNews(params?: {
   }
   const res = await fetch(url.toString());
   const json = await res.json();
-  if (!json.success) throw new Error(json.error || "Failed to fetch news");
+  if (!json.success) {
+    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to fetch news";
+    throw new Error(errMsg);
+  }
   return json.data;
 }
 
@@ -66,7 +69,10 @@ export async function fetchNews(params?: {
 export async function fetchStats(): Promise<DashboardStats> {
   const res = await fetch(`${API_BASE}/stats`);
   const json = await res.json();
-  if (!json.success) throw new Error(json.error || "Failed to fetch stats");
+  if (!json.success) {
+    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to fetch stats";
+    throw new Error(errMsg);
+  }
   return json.data;
 }
 
@@ -81,7 +87,10 @@ export async function updateArticle(
     body: JSON.stringify(updates),
   });
   const json = await res.json();
-  if (!json.success) throw new Error(json.error || "Failed to update article");
+  if (!json.success) {
+    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to update article";
+    throw new Error(errMsg);
+  }
   return json.data;
 }
 
@@ -95,6 +104,9 @@ export type ExecutiveSummary = {
 export async function fetchExecutiveSummary(): Promise<ExecutiveSummary> {
   const res = await fetch(`${API_BASE}/executive-summary`);
   const json = await res.json();
-  if (!json.success) throw new Error(json.error || "Failed to fetch summary");
+  if (!json.success) {
+    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to fetch summary";
+    throw new Error(errMsg);
+  }
   return json.data;
 }

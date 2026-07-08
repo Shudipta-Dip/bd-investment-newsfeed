@@ -126,16 +126,25 @@ async function createManyArticles(articles) {
  * Update an existing article (e.g., mark it as "action taken").
  */
 async function updateArticle(id, updates) {
-  if (!supabase) return { data: null, error: 'Database not configured' };
+  if (!supabase) return { data: null, error: { message: 'Database not configured' } };
 
   const { data, error } = await supabase
     .from(TABLE)
     .update(updates)
     .eq('id', id)
-    .select()
-    .single();
+    .select();
 
-  return { data, error };
+  if (error) return { data: null, error };
+  if (!data || data.length === 0) {
+    return { 
+      data: null, 
+      error: { 
+        message: 'No rows updated. Ensure article exists and your SUPABASE_SERVICE_KEY has UPDATE permissions (check RLS policies).' 
+      } 
+    };
+  }
+
+  return { data: data[0], error: null };
 }
 
 /**

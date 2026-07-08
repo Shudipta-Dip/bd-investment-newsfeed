@@ -50,9 +50,9 @@ export const ActionDrawer = ({ item, open, onOpenChange }: Props) => {
       toast.success(`${label} logged`, {
         description: `Action recorded against "${item.headline.slice(0, 48)}…"`,
       });
-    } catch {
+    } catch (err: any) {
       toast.error("Failed to save action", {
-        description: "Check your connection and try again.",
+        description: err.message || "Check your connection and try again.",
       });
     } finally {
       setSaving(false);

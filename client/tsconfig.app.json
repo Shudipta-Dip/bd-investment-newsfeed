@@ -16,6 +16,7 @@
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
@@ -30,6 +31,6 @@
     "useDefineForClassFields": true
   },
   "include": [
-    "src"
+    "src/**/*"
   ]
 }

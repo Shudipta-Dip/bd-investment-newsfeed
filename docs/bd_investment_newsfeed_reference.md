@@ -201,6 +201,46 @@ This is the most technically interesting part of the project and the section mos
 Dashboard with real-time intelligence
 ```
 
+### Sentiment, Magnitude, and Impact Taxonomy Logic
+
+This project does not rely on generic out-of-the-box sentiment analyzers. Instead, it utilizes a custom taxonomy and scoring mechanism tailored specifically to BIDA's macroeconomic mission: supporting economic growth, tracking foreign investor sentiment, and identifying systemic risks.
+
+#### 1. Sentiment Categorization (Opportunity, Risk, or Regulation)
+
+Articles are classified into three distinct categories. The classification aligns with the **BIDA macroeconomic perspective** (which may differ from commercial bank or sector-specific views):
+
+*   **`opportunity` (Opportunity for Economic Growth / Foreign Investment):**
+    *   *Definition:* Positive indicators that attract capital, boost FDI, improve sovereign/sector credit, or expand corporate capacity.
+    *   *Macro Nuance:* If an event is good for a specific business's bottom line but harmful to overall national development, BIDA's perspective overrides. (For example, high interest rate spreads are profitable for commercial banks, but are categorized as `risk` or `regulation` because they increase borrowing costs for SMEs).
+*   **`risk` (Threat to the Investment Climate):**
+    *   *Definition:* Negative developments that deter foreign capital, increase operational costs, or destabilize local markets.
+    *   *Scope:* Includes currency depreciation (Taka devaluation), supply chain disruption, rising sovereign debt risk, bureaucratic delay, and environmental/climate vulnerabilities.
+*   **`regulation` (Policy Parameters & Compliance):**
+    *   *Definition:* Neutral, factual policy announcements or regulatory frameworks that do not inherently represent a growth opportunity or an active risk, but rather define the operating rules for investors.
+    *   *Scope:* Central bank rate decisions, budget allocations, customs reforms, and trade MoUs.
+
+#### 2. Narrative Impact Score (0–100)
+
+The narrative impact represents the gravity of the news item relative to national economic interests. It is computed in a multi-stage process:
+
+1.  **Groq Initial AI Rating (Ingestion):** During Phase 2, the Llama model assigns a rating from `0` to `100` based on a predefined rubric:
+    *   **90-100 (Systemic):** Market-moving events affecting the entire nation or billions of dollars (e.g., IMF package approval, major sovereign default risk).
+    *   **70-89 (High/Sectoral):** Industry-wide impact (e.g., nationwide RMG labor strikes, bilateral trade agreements).
+    *   **50-69 (Moderate):** Notable news with limited scope (e.g., single-factory closures, regional infrastructure projects).
+    *   **30-49 (Low):** Minor/routine announcements (e.g., individual corporate earnings reports).
+    *   **0-29 (Minimal):** Marginally relevant local updates.
+2.  **Gemini Deep-Dive Refinement (International Press):** For global news, Gemini Flash reads the full extracted text (not just the snippet) and adjusts the score upward or downward based on how heavily the framing shapes international investor perception.
+3.  **Rule-Based Fallback:** If the AI services are offline, a fallback baseline score is computed in [analyzer.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/analyzer.js#L138-L148) starting at a base of `40` and adding `6` points for every positive/negative keyword hit, capped at a maximum of `98`.
+
+#### 3. Dynamic Magnitude Categorization
+
+On the client-facing dashboard, the numerical `impact_score` is translated into one of four distinct magnitudes of risk or opportunity:
+
+*   **Systemic:** `impact_score` $\ge$ **`90`** (Urgent, nation-level or market-moving signals).
+*   **Sectoral:** `impact_score` is between **`70` and `89`** (High impact affecting entire sectors or industries).
+*   **Notable:** `impact_score` is between **`30` and `69`** (Moderate/low localized or single-company signals).
+*   **Routine:** `impact_score` $\le$ **`29`** (Routine administrative or minor corporate announcements).
+
 ### Phase 1: Keyword-Based Relevance Filter
 
 **File:** [analyzer.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/analyzer.js)
@@ -655,7 +695,13 @@ App (ThemeProvider → QueryClientProvider → Router)
 
 5. **CSV export**: One-click export of all visible articles as a CSV file with headers: Title, Date, Source, Sentiment, Impact, Region, URL. All field values are wrapped through a centralized `escapeCSV()` helper that double-quote-wraps every cell and escapes internal quotes (`"` → `""`), preventing corrupted rows from titles containing commas (e.g., *"Bangladesh GDP grows, experts say"*). The downloaded filename dynamically reflects active filters — for example, `bd-investment-news-global-risk-2026-07-08.csv` — so users can immediately distinguish between filtered subsets and full exports.
 
-6. **Action logging**: Officials can click a card → side drawer opens → log actions (Draft Response, Mark Handled, Share Signal, Archive) with notes → saved to Supabase → query cache invalidated to reflect changes immediately.
+6. **Action logging and persistence**: BIDA officials can click a card to open the side panel (`ActionDrawer.tsx`) to log official responses against a news item.
+    *   **The 4 Action Tags**: When a note is typed, clicking one of the buttons prefixes it with a specific operational tag:
+        *   *Draft Response*: Prefixes with `[Correction needed]`, indicating BIDA needs to release a counter-narrative or clarification to correct an erroneous media report.
+        *   *Mark Handled*: Prefixes with `[Action]`, indicating standard processing, evaluation, or mitigation of the news signal.
+        *   *Share Signal*: Prefixes with `[Share signal]`, used to route the intelligence to another internal BIDA department or government body.
+        *   *Archive*: Prefixes with `[Archived]`, closing the loop on the report without further active response.
+    *   **Account-Free Server Persistence**: Although the dashboard does not require users to create accounts, actions are **not** stored locally in the browser. Clicking any action button triggers an HTTP `PATCH /api/news/:id` request that updates the Supabase PostgreSQL database directly, changing `action_taken = true` and writing to `action_note`. Once updated, React Query invalidates the cache to force a refetch, rendering the new status immediately for **all** visitors viewing the dashboard across any device.
 
 7. **Executive summary resilience**: The SummaryStats component handles three distinct UI states: a skeleton loader during initial fetch, a graceful fallback message ("Climate assessment temporarily unavailable") on API errors with auto-retry via the background polling cycle, and the rendered AI narrative on success.
 

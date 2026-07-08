@@ -14,6 +14,7 @@ const app = express();
 // Restricted CORS configuration to prevent unauthorized origins from calling the API
 const allowedOrigins = [
   ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : []),
+  'http://localhost:8080',
   'http://localhost:5173',
   'http://localhost:3000',
 ].map(o => o.trim()).filter(Boolean);
