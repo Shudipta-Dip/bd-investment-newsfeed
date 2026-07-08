@@ -8,6 +8,7 @@
 const models = require('../models');
 const { scrapeAll } = require('../services/scraper');
 const { generateExecutiveSummary } = require('../services/aiValidator');
+const { sendAlertEmail } = require('../services/emailService');
 
 /**
  * GET /api/health
@@ -196,7 +197,40 @@ const subscribeAlert = async (req, res) => {
       return res.status(500).json({ success: false, error });
     }
 
+    // Respond immediately — don't make the user wait for the email check
     res.status(201).json({ success: true, data, message: `Alert registered: you will be notified when the climate score drops below ${score}.` });
+
+    // --- Fire-and-forget: check if current score already qualifies ---
+    (async () => {
+      try {
+        const { data: articles, error: artErr } = await models.getArticles({ limit: 500 });
+        if (artErr || !articles || articles.length === 0) return;
+
+        const summary = await generateExecutiveSummary(articles);
+        const currentScore = summary.weightedScore;
+
+        if (currentScore < score) {
+          console.log(`📬 Instant Alert: Score ${currentScore} is below new subscriber's threshold ${score}. Dispatching to ${email}...`);
+          await sendAlertEmail({
+            toEmail: email,
+            score: currentScore,
+            narrative: summary.narrative,
+            articles,
+          });
+
+          // Update trigger timestamp so the 24-hour cooldown starts now
+          if (data && data[0] && data[0].id) {
+            await models.updateSubscriptionTrigger(data[0].id, currentScore);
+          }
+          console.log(`   ✅ Instant alert sent to ${email}`);
+        } else {
+          console.log(`📬 Instant Alert: Score ${currentScore} is at or above threshold ${score}. No immediate alert needed for ${email}.`);
+        }
+      } catch (instantErr) {
+        console.error(`📬 Instant Alert: Failed for ${email}:`, instantErr.message);
+      }
+    })();
+
   } catch (err) {
     console.error('Error subscribing alert:', err);
     res.status(500).json({ success: false, error: 'Failed to register alert subscription.' });
