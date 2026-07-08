@@ -279,17 +279,17 @@ const Index = () => {
                 <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
                   Impact Magnitude
                 </span>
-                <div className="relative pt-2 pb-6">
+                <div className="relative h-8 flex flex-col justify-between">
                   <input
                     type="range"
                     min="0"
                     max="100"
                     value={magnitudeValue}
                     onChange={(e) => setMagnitudeValue(Number(e.target.value))}
-                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary border border-border"
+                    className="w-full h-1.5 mt-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary border border-border"
                   />
                   <div
-                    className="absolute mt-2 transform -translate-x-1/2 bg-primary/10 text-primary border border-primary/20 shadow-sm rounded px-2 py-0.5 text-[10px] font-mono font-bold whitespace-nowrap pointer-events-none"
+                    className="absolute bottom-0 transform -translate-x-1/2 bg-primary/10 text-primary border border-primary/20 shadow-sm rounded px-2 py-0.5 text-[10px] font-mono font-bold whitespace-nowrap pointer-events-none"
                     style={{ left: `${magnitudeValue}%` }}
                   >
                     {magnitudeValue}({sliderInfo.label})
