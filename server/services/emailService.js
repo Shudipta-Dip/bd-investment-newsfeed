@@ -1,30 +1,19 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const ALERT_FROM_EMAIL = process.env.ALERT_FROM_EMAIL || 'no-reply@bida-dashboard.gov.bd';
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const ALERT_FROM_EMAIL = process.env.ALERT_FROM_EMAIL || 'onboarding@resend.dev';
 
-const isSmtpConfigured = !!(SMTP_HOST && SMTP_USER && SMTP_PASS);
+const isMailConfigured = !!RESEND_API_KEY;
 
-let transporter = null;
+let resend = null;
 
-if (isSmtpConfigured) {
-  console.log(`✉️  SMTP Configured. Host: ${SMTP_HOST}:${SMTP_PORT}, User: ${SMTP_USER}`);
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465, // true for 465, false for other ports
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
+if (isMailConfigured) {
+  console.log(`✉️  Resend Email API configured. From: ${ALERT_FROM_EMAIL}`);
+  resend = new Resend(RESEND_API_KEY);
 } else {
   console.warn(
-    '⚠️  SMTP Mail Service is not configured. Email dispatches will be mocked and printed to the terminal console.\n' +
-    '   To enable actual email alerts, configure SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS in your .env file.'
+    '⚠️  Email Service is not configured. Email dispatches will be mocked and printed to the terminal console.\n' +
+    '   To enable actual email alerts, set the RESEND_API_KEY environment variable.'
   );
 }
 
@@ -96,7 +85,7 @@ async function sendAlertEmail({ toEmail, score, narrative, articles }) {
     </div>
   `;
 
-  if (!transporter) {
+  if (!resend) {
     console.log(`\n--- MOCK EMAIL DISPATCH ---`);
     console.log(`To: ${toEmail}`);
     console.log(`Subject: ${subject}`);
@@ -106,24 +95,27 @@ async function sendAlertEmail({ toEmail, score, narrative, articles }) {
     return { mockSent: true };
   }
 
-  const mailOptions = {
-    from: ALERT_FROM_EMAIL,
-    to: toEmail,
-    subject: subject,
-    html: htmlContent,
-    attachments: [
-      {
-        filename: 'bd_investment_news_report.csv',
-        content: csvContent,
-        contentType: 'text/csv',
-      },
-    ],
-  };
-
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Alert email sent to ${toEmail}: messageId=${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    const { data, error } = await resend.emails.send({
+      from: ALERT_FROM_EMAIL,
+      to: [toEmail],
+      subject: subject,
+      html: htmlContent,
+      attachments: [
+        {
+          filename: 'bd_investment_news_report.csv',
+          content: Buffer.from(csvContent, 'utf-8'),
+        },
+      ],
+    });
+
+    if (error) {
+      console.error(`❌ Failed to send alert email to ${toEmail}:`, error);
+      throw new Error(error.message || JSON.stringify(error));
+    }
+
+    console.log(`✅ Alert email sent to ${toEmail}: id=${data?.id}`);
+    return { success: true, messageId: data?.id };
   } catch (error) {
     console.error(`❌ Failed to send alert email to ${toEmail}:`, error);
     throw error;
