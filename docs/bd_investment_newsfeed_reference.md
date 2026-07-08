@@ -655,7 +655,7 @@ The design system from the PRD is implemented through CSS custom properties in [
 | `--neutral` | Amber 500 | Same | Regulation/policy badges |
 
 **Typography:**
-- **Primary**: Inter (Variable) — imported from Google Fonts for UI/headings
+- **Primary**: Elma Sans — used globally for UI, headings, and copy
 - **Mono**: JetBrains Mono — used for metadata, scores, timestamps, sentiment labels
 
 ### Component Hierarchy

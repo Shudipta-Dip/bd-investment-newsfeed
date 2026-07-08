@@ -11,7 +11,6 @@ import { toNewsItem, type NewsItem } from "@/data/news";
 
 // Database sentiment values
 type ApiSentiment = "opportunity" | "risk" | "regulation";
-type ApiMagnitude = "systemic" | "sectoral" | "notable" | "routine";
 type ApiRegion = "local" | "global";
 
 const sentimentFilters: { key: ApiSentiment; label: string; color: string }[] = [
@@ -20,17 +19,48 @@ const sentimentFilters: { key: ApiSentiment; label: string; color: string }[] = 
   { key: "regulation", label: "Regulation", color: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
 ];
 
-const magnitudeFilters: { key: ApiMagnitude; label: string; color: string }[] = [
-  { key: "systemic", label: "Systemic", color: "bg-red-500/10 text-red-400 border-red-500/30" },
-  { key: "sectoral", label: "Sectoral", color: "bg-orange-500/10 text-orange-400 border-orange-500/30" },
-  { key: "notable", label: "Notable", color: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
-  { key: "routine", label: "Routine", color: "bg-muted text-muted-foreground border-border" },
-];
-
 const regionFilters: { key: ApiRegion; label: string; icon: typeof Globe }[] = [
   { key: "local", label: "Local Media", icon: MapPin },
   { key: "global", label: "Global Insights", icon: Globe },
 ];
+
+function getSliderMagnitudeInfo(value: number): {
+  label: string;
+  description: string;
+  color: string;
+  apiParam: string | undefined;
+} {
+  if (value >= 90) {
+    return {
+      label: "Systemic",
+      description: "Severe, market-moving events (Score 90-100)",
+      color: "text-red-400 font-bold",
+      apiParam: "systemic",
+    };
+  }
+  if (value >= 70) {
+    return {
+      label: "Sectoral",
+      description: "Industry-wide implications (Score 70-89)",
+      color: "text-orange-400 font-bold",
+      apiParam: "sectoral,systemic",
+    };
+  }
+  if (value >= 30) {
+    return {
+      label: "Notable",
+      description: "Moderate localized scope (Score 30-69)",
+      color: "text-blue-400 font-bold",
+      apiParam: "notable,sectoral,systemic",
+    };
+  }
+  return {
+    label: "Routine",
+    description: "Routine updates & minor releases (Score 0-29)",
+    color: "text-muted-foreground font-semibold",
+    apiParam: undefined,
+  };
+}
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,23 +68,11 @@ const Index = () => {
 
   // Multi-select state: empty Set = show all
   const [selectedSentiments, setSelectedSentiments] = useState<Set<ApiSentiment>>(new Set());
-  const [selectedMagnitudes, setSelectedMagnitudes] = useState<Set<ApiMagnitude>>(new Set());
   const [selectedRegions, setSelectedRegions] = useState<Set<ApiRegion>>(new Set());
+  const [magnitudeValue, setMagnitudeValue] = useState<number>(0);
 
   const toggleSentiment = (key: ApiSentiment) => {
     setSelectedSentiments((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
-
-  const toggleMagnitude = (key: ApiMagnitude) => {
-    setSelectedMagnitudes((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
         next.delete(key);
@@ -81,9 +99,10 @@ const Index = () => {
   const apiSentiment = selectedSentiments.size > 0
     ? Array.from(selectedSentiments).join(",")
     : undefined;
-  const apiMagnitude = selectedMagnitudes.size > 0
-    ? Array.from(selectedMagnitudes).join(",")
-    : undefined;
+  
+  const sliderInfo = useMemo(() => getSliderMagnitudeInfo(magnitudeValue), [magnitudeValue]);
+  const apiMagnitude = sliderInfo.apiParam;
+  
   const apiRegion = selectedRegions.size > 0 
     ? Array.from(selectedRegions).join(",") 
     : undefined;
@@ -142,8 +161,8 @@ const Index = () => {
     if (selectedSentiments.size > 0) {
       filenameSegments.push(Array.from(selectedSentiments).join("-"));
     }
-    if (selectedMagnitudes.size > 0) {
-      filenameSegments.push(Array.from(selectedMagnitudes).join("-"));
+    if (magnitudeValue > 0) {
+      filenameSegments.push(`min-${magnitudeValue}-${sliderInfo.label.toLowerCase()}`);
     }
     if (searchQuery.trim()) {
       const cleanSearch = searchQuery.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -196,72 +215,111 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex flex-col xl:flex-row gap-4 mb-8 bg-card border shadow-sm rounded-xl p-3 items-start xl:items-center">
-            
-            {/* Sentiment Filters (Multi-Select) */}
-            <div className="flex gap-2 flex-wrap items-center bg-background/50 rounded-lg p-1.5 border border-border/50">
-              <span className="text-xs font-semibold bg-primary/10 text-primary px-2.5 py-1.5 rounded uppercase tracking-wider mr-1">Sentiment</span>
-              {sentimentFilters.map((f) => {
-                const isActive = selectedSentiments.has(f.key);
-                return (
-                  <button
-                    key={f.key}
-                    onClick={() => toggleSentiment(f.key)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition ${
-                      isActive
-                        ? f.color + " border-current shadow-sm"
-                        : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-card"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Filter Panel */}
+          <div className="bg-card border border-border shadow-card rounded-xl p-6 mb-8">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">
+              Filter Intelligence Feed
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Sentiment Filter */}
+              <div className="space-y-3">
+                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  Sentiment
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {sentimentFilters.map((f) => {
+                    const isActive = selectedSentiments.has(f.key);
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => toggleSentiment(f.key)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition ${
+                          isActive
+                            ? f.color + " border-current shadow-sm"
+                            : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-muted"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-            {/* Magnitude Filters (Multi-Select) */}
-            <div className="flex gap-2 flex-wrap items-center bg-background/50 rounded-lg p-1.5 border border-border/50">
-              <span className="text-xs font-semibold bg-primary/10 text-primary px-2.5 py-1.5 rounded uppercase tracking-wider mr-1">Magnitude</span>
-              {magnitudeFilters.map((f) => {
-                const isActive = selectedMagnitudes.has(f.key);
-                return (
-                  <button
-                    key={f.key}
-                    onClick={() => toggleMagnitude(f.key)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition ${
-                      isActive
-                        ? f.color + " border-current shadow-sm"
-                        : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-card"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                );
-              })}
-            </div>
+              {/* Source Region Filter */}
+              <div className="space-y-3">
+                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  Source Region
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {regionFilters.map((f) => {
+                    const isActive = selectedRegions.has(f.key);
+                    const Icon = f.icon;
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => toggleRegion(f.key)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition inline-flex items-center gap-1.5 ${
+                          isActive
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-muted"
+                        }`}
+                      >
+                        <Icon className="w-3 h-3" strokeWidth={2} />
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-            {/* Region Filter (Multi-Select) */}
-            <div className="flex gap-2 flex-wrap items-center bg-background/50 rounded-lg p-1.5 border border-border/50">
-              <span className="text-xs font-semibold bg-primary/10 text-primary px-2.5 py-1.5 rounded uppercase tracking-wider mr-1">Source</span>
-              {regionFilters.map((f) => {
-                const isActive = selectedRegions.has(f.key);
-                const Icon = f.icon;
-                return (
-                  <button
-                    key={f.key}
-                    onClick={() => toggleRegion(f.key)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition inline-flex items-center gap-1.5 ${
-                      isActive
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                        : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-card"
-                    }`}
-                  >
-                    <Icon className="w-3 h-3" strokeWidth={2} />
-                    {f.label}
-                  </button>
-                );
-              })}
+              {/* Magnitude Slider Filter */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    Impact Magnitude
+                  </span>
+                  <span className="text-xs font-mono font-bold bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                    Min Score: {magnitudeValue}
+                  </span>
+                </div>
+                <div className="pt-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={magnitudeValue}
+                    onChange={(e) => setMagnitudeValue(Number(e.target.value))}
+                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary border border-border"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1 px-0.5">
+                    <span>0 (All)</span>
+                    <span>30 (Notable)</span>
+                    <span>70 (Sectoral)</span>
+                    <span>90 (Systemic)</span>
+                  </div>
+                </div>
+                <div className="bg-background/50 border border-border rounded-lg p-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className={`text-xs font-mono font-bold uppercase ${sliderInfo.color}`}>
+                      {sliderInfo.label}
+                    </span>
+                    <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                      {sliderInfo.description}
+                    </p>
+                  </div>
+                  {magnitudeValue > 0 && (
+                    <button
+                      onClick={() => setMagnitudeValue(0)}
+                      className="text-[10px] font-mono font-semibold text-primary hover:underline shrink-0"
+                    >
+                      RESET
+                    </button>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
 
