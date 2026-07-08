@@ -139,7 +139,7 @@ function getRotatedModel(purpose = 'validation') {
   currentKeyIndex++;
 
   const genAI = new GoogleGenerativeAI(keys[keyIdx]);
-  return genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+  return genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 }
 
 // ============================================================================
@@ -499,6 +499,7 @@ CRITICAL INSTRUCTIONS:
     return summaryData;
   } catch (error) {
     console.error('Executive summary error:', error.message);
+    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { narrative: 'Climate assessment temporarily unavailable.', weightedScore };
   }
 }
