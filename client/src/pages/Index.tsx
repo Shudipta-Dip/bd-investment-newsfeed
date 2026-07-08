@@ -3,7 +3,6 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { CriticalAlertBanner } from "@/components/CriticalAlertBanner";
 import { SummaryStats } from "@/components/SummaryStats";
 import { NewsCard } from "@/components/NewsCard";
-import { ActionDrawer } from "@/components/ActionDrawer";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, Globe, MapPin } from "lucide-react";
 import { useNews } from "@/hooks/use-news";
@@ -34,8 +33,6 @@ const regionFilters: { key: ApiRegion; label: string; icon: typeof Globe }[] = [
 ];
 
 const Index = () => {
-  const [active, setActive] = useState<NewsItem | null>(null);
-  const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -112,11 +109,6 @@ const Index = () => {
     [newsItems],
   );
 
-  const openItem = (item: NewsItem) => {
-    setActive(item);
-    setOpen(true);
-  };
-
   const exportToCSV = () => {
     if (!rawArticles || rawArticles.length === 0) return;
 
@@ -169,7 +161,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {topRisk && (
-        <CriticalAlertBanner item={topRisk} onView={() => openItem(topRisk)} />
+        <CriticalAlertBanner item={topRisk} onView={() => window.open(topRisk.url, "_blank")} />
       )}
       <DashboardHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
@@ -288,14 +280,12 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {newsItems.map((item) => (
-                <NewsCard key={item.id} item={item} onOpen={openItem} />
+                <NewsCard key={item.id} item={item} />
               ))}
             </div>
           )}
         </section>
       </main>
-
-      <ActionDrawer item={active} open={open} onOpenChange={setOpen} />
     </div>
   );
 };

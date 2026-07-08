@@ -672,15 +672,10 @@ App (ThemeProvider → QueryClientProvider → Router)
     │   ├── Sentiment: Opportunity / Risk / Regulation
     │   ├── Magnitude: Systemic / Sectoral / Notable / Routine
     │   └── Source: Local Media / Global Insights
-    ├── NewsCard[] — grid of article cards
-    │   ├── SentimentBadge (colored label)
-    │   ├── AI Rationale (sparkle icon + note)
-    │   └── Impact bar (visual + numeric score)
-    └── ActionDrawer (Sheet/side panel)
-        ├── Article details + impact gauge
-        ├── Status (Pending/Handled)
-        ├── Action logging (textarea + 4 action buttons)
-        └── "Open Original Source" link
+    └── NewsCard[] — grid of article cards (links directly to source URL)
+        ├── SentimentBadge (colored label)
+        ├── AI Rationale (sparkle icon + note)
+        └── Impact bar (visual + numeric score)
 ```
 
 ### Key UX Patterns
@@ -695,13 +690,7 @@ App (ThemeProvider → QueryClientProvider → Router)
 
 5. **CSV export**: One-click export of all visible articles as a CSV file with headers: Title, Date, Source, Sentiment, Impact, Region, URL. All field values are wrapped through a centralized `escapeCSV()` helper that double-quote-wraps every cell and escapes internal quotes (`"` → `""`), preventing corrupted rows from titles containing commas (e.g., *"Bangladesh GDP grows, experts say"*). The downloaded filename dynamically reflects active filters — for example, `bd-investment-news-global-risk-2026-07-08.csv` — so users can immediately distinguish between filtered subsets and full exports.
 
-6. **Action logging and persistence**: BIDA officials can click a card to open the side panel (`ActionDrawer.tsx`) to log official responses against a news item.
-    *   **The 4 Action Tags**: When a note is typed, clicking one of the buttons prefixes it with a specific operational tag:
-        *   *Draft Response*: Prefixes with `[Correction needed]`, indicating BIDA needs to release a counter-narrative or clarification to correct an erroneous media report.
-        *   *Mark Handled*: Prefixes with `[Action]`, indicating standard processing, evaluation, or mitigation of the news signal.
-        *   *Share Signal*: Prefixes with `[Share signal]`, used to route the intelligence to another internal BIDA department or government body.
-        *   *Archive*: Prefixes with `[Archived]`, closing the loop on the report without further active response.
-    *   **Account-Free Server Persistence**: Although the dashboard does not require users to create accounts, actions are **not** stored locally in the browser. Clicking any action button triggers an HTTP `PATCH /api/news/:id` request that updates the Supabase PostgreSQL database directly, changing `action_taken = true` and writing to `action_note`. Once updated, React Query invalidates the cache to force a refetch, rendering the new status immediately for **all** visitors viewing the dashboard across any device.
+6. **Direct source linking**: News cards behave as HTML anchor links that open the original publisher's URL in a new browser tab (`target="_blank"`). This provides immediate full-text reading context for BIDA officials, removing the need for a secondary side drawer. The red top banner's "View Impact →" button similarly links directly to the target article's original webpage.
 
 7. **Executive summary resilience**: The SummaryStats component handles three distinct UI states: a skeleton loader during initial fetch, a graceful fallback message ("Climate assessment temporarily unavailable") on API errors with auto-retry via the background polling cycle, and the rendered AI narrative on success.
 

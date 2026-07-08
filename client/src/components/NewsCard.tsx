@@ -19,18 +19,18 @@ function impactLabel(score: number): { text: string; color: string } {
 
 export const NewsCard = ({
   item,
-  onOpen,
 }: {
   item: NewsItem;
-  onOpen: (item: NewsItem) => void;
 }) => {
   const magnitude = impactLabel(item.impact);
   const isGlobal = item.region !== "Bangladesh";
 
   return (
-    <button
-      onClick={() => onOpen(item)}
-      className="group text-left bg-card border border-border rounded-lg p-6 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all"
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group text-left bg-card border border-border rounded-lg p-6 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all block"
     >
       <div className="flex justify-between items-start mb-4 gap-3">
         <SentimentBadge sentiment={item.sentiment} />
@@ -75,6 +75,6 @@ export const NewsCard = ({
           {item.region}
         </span>
       </div>
-    </button>
+    </a>
   );
 };
