@@ -1,8 +1,6 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '..', '.env') });
 const { scrapeAll } = require('./services/scraper');
 
-const { checkAndDispatchAlerts } = require('./services/alertDispatcher');
-
 async function run() {
   console.log('Starting fresh scrape with AI classification + deep-dive...');
   const results = await scrapeAll();
@@ -12,10 +10,6 @@ async function run() {
   console.log(`Articles relevant: ${results.articlesRelevant}`);
   console.log(`Articles saved: ${results.articlesSaved}`);
   console.log(`Sources failed: ${results.sourcesFailed}`);
-  
-  // Post-scrape: check and send email alerts
-  await checkAndDispatchAlerts();
-  
   process.exit(0);
 }
 run();
