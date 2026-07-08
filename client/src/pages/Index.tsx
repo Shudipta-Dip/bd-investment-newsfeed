@@ -4,7 +4,7 @@ import { CriticalAlertBanner } from "@/components/CriticalAlertBanner";
 import { SummaryStats } from "@/components/SummaryStats";
 import { NewsCard } from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, Globe, MapPin, Bell, BellRing } from "lucide-react";
+import { Download, Loader2, Globe, MapPin, Bell, BellRing, HelpCircle } from "lucide-react";
 import { useNews } from "@/hooks/use-news";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toNewsItem, type NewsItem } from "@/data/news";
@@ -21,6 +21,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Database sentiment values
 type ApiSentiment = "opportunity" | "risk" | "regulation";
@@ -332,9 +338,37 @@ const Index = () => {
               
               {/* Sentiment Filter */}
               <div className="space-y-3">
-                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Sentiment
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                    Sentiment
+                  </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" className="text-muted-foreground hover:text-foreground transition-colors cursor-help outline-none">
+                          <HelpCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs p-3 bg-card border border-border text-foreground rounded-lg shadow-lg" side="top" align="start">
+                        <div className="space-y-2 text-xs leading-relaxed">
+                          <p className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground border-b pb-1">Sentiment Categories</p>
+                          <div>
+                            <strong className="text-emerald-400">Opportunity:</strong> Positive signals like FDI growth, policy incentives, or infrastructure expansions.
+                          </div>
+                          <div>
+                            <strong className="text-slate-400">Neutral:</strong> Informational announcements or routine reports with no immediate economic impact.
+                          </div>
+                          <div>
+                            <strong className="text-blue-400">Regulation:</strong> Shifts in tariffs, trade policy, compliance, or tax rules.
+                          </div>
+                          <div>
+                            <strong className="text-red-400">Risk / Critical:</strong> Concerns like political disruption, high inflation, energy crises, or delays.
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {sentimentFilters.map((f) => {
                     const isActive = selectedSentiments.has(f.key);
@@ -384,9 +418,37 @@ const Index = () => {
 
               {/* Magnitude Slider Filter */}
               <div className="space-y-3">
-                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                  Impact Magnitude
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                    Impact Magnitude
+                  </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" className="text-muted-foreground hover:text-foreground transition-colors cursor-help outline-none">
+                          <HelpCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs p-3 bg-card border border-border text-foreground rounded-lg shadow-lg" side="top" align="start">
+                        <div className="space-y-2 text-xs leading-relaxed">
+                          <p className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground border-b pb-1">Impact Levels</p>
+                          <div>
+                            <strong className="text-slate-400">Routine (0–29):</strong> Standard operations, minor local news, or routine releases.
+                          </div>
+                          <div>
+                            <strong className="text-blue-400">Notable (30–69):</strong> Significant domestic policies or mid-tier approvals.
+                          </div>
+                          <div>
+                            <strong className="text-orange-400">Sectoral (70–89):</strong> Major developments affecting entire industrial or financial sectors (e.g. RMG, energy).
+                          </div>
+                          <div>
+                            <strong className="text-red-400">Systemic (90–100):</strong> Country-wide economic shocks, ratings shifts, or high-level policies.
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="relative h-8 flex flex-col justify-between">
                   <input
                     type="range"
