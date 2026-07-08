@@ -8,6 +8,7 @@ import { Download, Loader2, Globe, MapPin } from "lucide-react";
 import { useNews } from "@/hooks/use-news";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toNewsItem, type NewsItem } from "@/data/news";
+import { InfiniteGridBackground } from "@/components/InfiniteGridBackground";
 
 // Database sentiment values
 type ApiSentiment = "opportunity" | "risk" | "regulation";
@@ -178,11 +179,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {topRisk && (
-        <CriticalAlertBanner item={topRisk} onView={() => window.open(topRisk.url, "_blank")} />
-      )}
-      <DashboardHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+    <div className="min-h-screen bg-background text-foreground relative">
+      <InfiniteGridBackground />
+      <div className="relative z-10">
+        {topRisk && (
+          <CriticalAlertBanner item={topRisk} onView={() => window.open(topRisk.url, "_blank")} />
+        )}
+        <DashboardHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
       <main className="max-w-8xl mx-auto px-6 lg:px-8 py-8 lg:py-10">
         <section className="mb-10">
@@ -321,6 +324,7 @@ const Index = () => {
           )}
         </section>
       </main>
+      </div>
     </div>
   );
 };
