@@ -1,6 +1,6 @@
 # BD Investment Newsfeed — Complete Technical Reference
 
-> **Purpose:** Personal study reference for your LLM & Agentic AI coursework presentation. Living document — will be updated as we polish the project.
+> **Purpose:** Personal study reference.
 >
 > **Last Updated:** 2026-07-07
 
