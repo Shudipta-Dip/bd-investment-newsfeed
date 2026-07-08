@@ -50,7 +50,7 @@ It operates as a **24/7 automated intelligence pipeline** that:
 
 | Metric | Value |
 |---|---|
-| RSS sources monitored | 100+ across 40+ countries |
+| RSS sources monitored | 300+ across 40+ countries |
 | Scrape frequency | Every 3 hours (cron) |
 | AI models used | 2 (Groq/Llama 3.1 + Google Gemini Flash) |
 | Dashboard retention | 7-day rolling window |
@@ -67,7 +67,7 @@ It operates as a **24/7 automated intelligence pipeline** that:
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        DATA INGESTION LAYER                          │
 │                                                                      │
-│  100+ RSS Sources ──► rss-parser ──► HTML Fallback (cheerio)         │
+│  300+ RSS Sources ──► rss-parser ──► HTML Fallback (cheerio)         │
 │  (sources.js)         (scraper.js)   (htmlScraper.js)                │
 └─────────────────────────────────┬────────────────────────────────────┘
                                   │ Raw articles
@@ -140,7 +140,7 @@ It operates as a **24/7 automated intelligence pipeline** that:
 | [services/aiValidator.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/aiValidator.js) | **The AI brain.** Contains all LLM interactions: batch validation, deep-dive, local rationale, executive summary. Includes `parseJsonArraySafe()` for resilient LLM output parsing, `retryWithBackoff()` for rate-limit handling, and content-based in-memory caching for the executive summary. |
 | [services/articleExtractor.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/articleExtractor.js) | Full-text extraction for deep-dive. Uses Mozilla Readability (Reader View engine) with Cheerio fallback. |
 | [services/htmlScraper.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/htmlScraper.js) | HTML scraping fallback for sources without RSS feeds. Extracts headlines from raw HTML using 3 strategies. |
-| [services/sources.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/sources.js) | Auto-generated array of 100+ RSS source objects `{name, url, region}`. |
+| [services/sources.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/sources.js) | Auto-generated array of 300+ active RSS source objects `{name, url, region}`. |
 
 #### Client ([client/src/](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src))
 
@@ -166,7 +166,7 @@ This is the most technically interesting part of the project and the section mos
 ### The Funnel Metaphor
 
 ```
-4,000+ raw headlines (from 100+ RSS feeds)
+4,000+ raw headlines (from 300+ active RSS feeds)
          │
     Phase 1: Keyword Filter (analyzer.js)
          │  ─── Rejects sports, crime, entertainment
@@ -529,7 +529,7 @@ CRITICAL INSTRUCTIONS:
 ```mermaid
 graph TD
     A["Cron Trigger<br/>0 */3 * * *"] --> B["scrapeAll()"]
-    B --> C["Load 100+ sources<br/>from sources.js"]
+    B --> C["Load 300+ sources<br/>from sources.js"]
     C --> D["Batch 20 sources<br/>at a time"]
     
     D --> E{"RSS Parser<br/>succeeds?"}
@@ -718,7 +718,7 @@ In development, Vite's built-in proxy handles the same routing (`/api → localh
 
 ### Phase 3: Source Expansion (RSS Discovery Engine)
 
-**What happened:** You expanded from a handful of manually-picked RSS feeds to 100+ by building an auto-discovery pipeline.
+**What happened:** You expanded from a handful of manually-picked RSS feeds to 300+ by building an auto-discovery pipeline.
 
 **Evidence:**
 - [RSS News Source.txt](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/docs/RSS%20News%20Source.txt) — a massive 33KB tab-separated file listing news portals across 40+ countries (Argentina, Australia, Azerbaijan, Bahrain, Bangladesh, Belgium, Bhutan, Brazil, Cambodia, Canada, China, etc.)

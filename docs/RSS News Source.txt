@@ -1,324 +1,305 @@
-Country	News Portal Link	Notes
-Argentina	https://www.batimes.com.ar/section/economy	English version of Perfil; independent and critical economic analysis.
-Argentina	https://en.mercopress.com/argentina	South Atlantic news agency; strong on trade and Mercosur issues.
-Argentina	https://www.thebubble.com/	Digital news covering politics and business (sporadic updates).
-Argentina	https://argentinareports.com/business/	Syndicated news focusing on investment and market trends.
-Australia	https://www.afr.com/	"The premier daily for business, finance, and investment news."
-Australia	https://www.businessnewsaustralia.com/	"Focuses on entrepreneurship, startups, and listed companies."
-Australia	https://www.theaustralian.com.au/business	National daily with extensive market and corporate coverage.
-Australia	https://www.smartcompany.com.au/	"Dedicated to SMEs, startups, and entrepreneurs."
-Australia	https://www.abc.net.au/news/business	National broadcaster; reliable for macroeconomics and consumer news.
-Austria	https://www.thelocal.at/business	English news for expats; covers labor laws and local companies.
-Austria	https://www.vienna.at/	General news with occasional business summaries (mostly German).
-Austria	N/A	Austria lacks dedicated native English business dailies; rely on regional EU sources like DW or Politico EU.
-Azerbaijan	https://www.azernews.az/business/	"Leading English newspaper; covers energy, logistics, and tech."
-Azerbaijan	https://en.trend.az/business/	Private agency; strong on Caspian energy and regional transport.
-Azerbaijan	https://apa.az/en/economy	Major local agency covering banking and industry.
-Azerbaijan	https://www.turan.az/en/economics	Independent agency; offers analytical reports on the economy.
-Azerbaijan	https://www.caspianenergy.net/	"Focused specifically on oil, gas, and renewable energy sectors."
-Bahrain	https://www.gdnonline.com/Section/2/Business	The oldest English daily; comprehensive local market coverage.
-Bahrain	https://www.bahrainthismonth.com/magazine/business	Monthly focus on corporate events and interviews.
-Bahrain	https://www.bna.bh/en/category/business.aspx	Bahrain News Agency; official source for royal decrees/economy.
-Bahrain	https://www.bizbahrain.com/	Dedicated business media network covering all sectors.
-Bangladesh	https://www.thedailystar.net/business	Most circulated English daily; highly trusted corporate news.
-Bangladesh	https://thefinancialexpress.com.bd/	Dedicated business daily; strong on stock market and policy.
-Bangladesh	https://www.tbsnews.net/	Modern business daily; excellent visual data and deep dives.
-Bangladesh	https://www.dhakatribune.com/business	"Popular daily with focus on startups, tech, and RMG sector."
-Bangladesh	https://www.newagebd.net/business	Critical perspective; good for labor and industrial news.
-Belgium	https://www.brusselstimes.com/business	Leading expat/EU focused news; covers Belgian corporate law.
-Belgium	https://www.vrt.be/vrtnws/en/	Public broadcaster; reliable summaries of economic shifts.
-Belgium	https://www.politico.eu/	Based in Brussels; essential for regulatory and EU-business news.
-Belgium	https://www.xpats.com/news	Lifestyle/Business mix for the international community.
-Bhutan	https://kuenselonline.com/category/business/	"National daily; covers hydropower, tourism, and agriculture."
-Bhutan	https://thebhutanese.bt/category/business/	Investigative weekly; good for private sector challenges.
-Bhutan	https://businessbhutan.bt/	The only dedicated financial newspaper in the country.
-Brazil	https://riotimesonline.com/brazil-news/rio-business/	"Top English source; covers markets, agro, and tech."
-Brazil	https://braziljournal.com/	(Use translate mostly) but increasingly offers English highlights.
-Brazil	https://www1.folha.uol.com.br/internacional/en/	"Major daily; ""Market"" section is essential reading."
-Brazil	https://agenciabrasil.ebc.com.br/en/economia	State agency; objective economic data releases.
-Brazil	https://www.valor.com.br/international	(Subscription) The 'Wall Street Journal' of Brazil.
-Cambodia	https://www.khmertimeskh.com/5093/business/	The leading English daily; pro-government but comprehensive on trade.
-Cambodia	https://www.phnompenhpost.com/business	Historic independent paper; covers corporate law and banking.
-Cambodia	https://cambodiainvestmentreview.com/	"Dedicated portal for FDI, startups, and market entry analysis."
-Cambodia	https://www.kiripost.com/	"Modern digital outlet focusing on tech, business, and startups."
-Canada	https://financialpost.com/	Business section of the National Post; conservative economic analysis.
-Canada	https://www.theglobeandmail.com/business/	"""Report on Business"" is Canada's most respected financial news section."
-Canada	https://www.bnnbloomberg.ca/	Premier TV/Web source for real-time markets and commodities.
-Canada	https://www.thestar.com/business/	"Focuses on consumer business, housing, and labor issues."
-Canada	https://www.canadianbusiness.com/	"Magazine format; good for trends, leadership, and long-form."
-China	https://www.caixinglobal.com/	"High-quality, independent financial journalism (Paywall/Freemium)."
-China	https://www.scmp.com/business	(South China Morning Post) Hong Kong-based; top source for China tech/markets.
-China	https://www.shine.cn/biz/	State-run; focuses on Shanghai finance and corporate news.
-China	https://www.chinadaily.com.cn/business	Official government voice; key for policy announcements.
-China	https://www.yicaiglobal.com/	English arm of Yicai Media; deep data on Chinese stock markets.
-Croatia	https://www.total-croatia-news.com/business	The most widely read English news; excellent business/tourism insight.
-Croatia	https://www.croatiaweek.com/category/business/	"Covers diaspora business, tourism, and successful startups."
-Croatia	https://n1info.hr/english/	Regional broadcaster; reliable breaking economic news.
-Cuba	https://havanatimes.org/category/features/economics/	"Independent, open-minded commentary on the Cuban economy."
-Cuba	https://oncubanews.com/en/category/economy/	Miami/Havana based; covers US-Cuba relations and private sector.
-Cuba	https://en.granma.cu/	Official Communist Party organ; state economic updates.
-Denmark	https://cphpost.dk/?cat=4	The only English-language weekly newspaper; heavy business focus.
-Denmark	https://www.thelocal.dk/business	Digital news for internationals; covers unions and work culture.
-Denmark	https://scandasia.com/category/news/denmark/	Focuses on trade links between Scandinavia and Asia.
-Estonia	https://news.err.ee/business	"Public broadcaster; high-quality, objective English reporting."
-Estonia	https://www.baltictimes.com/news/estonia/	Regional daily covering all Baltic economies.
-Estonia	https://estonianworld.com/category/business/	Independent global magazine; focuses on tech and e-residency.
-Estonia	https://investinestonia.com/news/	Government agency; excellent for FDI and startup news.
-Finland	https://yle.fi/news	National public broadcaster; reliable daily business summaries.
-Finland	https://www.helsinkitimes.fi/business.html	Independent weekly; covers corporate news and tech.
-Finland	https://www.goodnewsfinland.com/	"Focuses on innovation, startups, and export success stories."
-Finland	https://www.dailyfinland.fi/business	English news from Lapland; covers northern economy.
-France	https://www.france24.com/en/business/	International news channel; global focus with French corporate lens.
-France	https://www.rfi.fr/en/business-and-tech/	Public radio; strong on French-African trade relations.
-France	https://www.thelocal.fr/business	Essential for expats; covers labor laws and taxes.
-France	https://www.lemonde.fr/en/economy/	Premier daily; offers a selection of translated economic articles.
-France	https://frenchtechjournal.com/	Niche coverage of the French startup ecosystem.
-Georgia	https://civil.ge/archives/category/news/economy	High-quality independent reporting; reliable data and policy analysis.
-Georgia	https://agenda.ge/en/news/business	Government-affiliated; excellent for official statistics and projects.
-Georgia	https://www.financial.ge/	Dedicated business weekly; strong on banking and corporate interviews.
-Georgia	http://georgiatoday.ge/category/business/	The most widely read English newspaper in the region.
-Georgia	https://bm.ge/en	Multimedia portal (TV/Web); primary source for real-time business news.
-Germany	https://www.handelsblatt.com/english/	"The ""Wall Street Journal"" of Germany; essential financial reading."
-Germany	https://www.dw.com/en/business/s-1431	Deutsche Welle (State); comprehensive macro and industrial news.
-Germany	https://www.thelocal.de/business	"Top source for expats; covers labor laws, taxes, and startups."
-Germany	https://www.cleanenergywire.org/	"Specialized, high-impact news on Germany's energy transition (Energiewende)."
-Germany	https://www.munich-startup.de/en/	Focused on the Bavarian tech and venture capital ecosystem.
-Ghana	https://www.graphic.com.gh/business.html	State-owned daily; the most authoritative source for policy/tenders.
-Ghana	https://citibusinessnews.com/	"Modern, digital-first portal; excellent for private sector and stock updates."
-Ghana	https://thebftonline.com/	(Business & Financial Times) Ghana’s dedicated business daily.
-Ghana	https://www.myjoyonline.com/business/	Highly popular independent news; covers consumer and retail sectors.
-Ghana	https://www.ghanaweb.com/GhanaHomePage/business/	Massive aggregator; best for a quick overview of all local headlines.
-Greece	https://www.ekathimerini.com/economy/	The leading English daily; highly trusted by international investors.
-Greece	https://www.naftemporiki.gr/english/	The historic financial newspaper of Greece; strong on shipping.
-Greece	https://greekreporter.com/category/greek-news/business/	Global Greek news; covers tourism and diaspora investment.
-Greece	https://www.capital.gr/en	Focused on the Athens Stock Exchange and corporate finance.
-Guinea	https://www.businessinguinea.com/	(Aggregator) Tracks mining and major government projects.
-Guinea	https://www.mining.com/region/africa/guinea/	Essential reading; Guinea's economy is driven by bauxite mining.
-Guinea	N/A	"Francophone. Use ""Guinee News"" with browser translation."
-Hungary	https://bbj.hu/	The leading English business bi-weekly; essential for expats.
-Hungary	https://www.portfolio.hu/en	"High-quality financial news; strong on FX, banking, and real estate."
-Hungary	https://hungarytoday.hu/category/business/	Modern portal; covers government policy and automotive sector.
-Hungary	https://dailynewshungary.com/category/business/	Aggregator/Original content mix; high volume of updates.
-Iceland	https://icelandmonitor.mbl.is/news/business/	Part of Morgunblaðið; the standard for English business news.
-Iceland	https://www.icelandreview.com/category/business/	"Long-running magazine; covers tourism, fisheries, and energy."
-Iceland	https://www.businessiceland.is/	Official trade council; reliable for sector data and promotion.
-Iceland	https://northstack.is/	Specialized news for the Icelandic startup and tech scene.
-India	https://economictimes.indiatimes.com/	The world's second-most widely read business daily. Massive scope.
-India	https://www.livemint.com/	Associated with WSJ; high-quality data journalism and clean UI.
-India	https://www.business-standard.com/	Preferred by serious investors for its rigorous analysis and opinion.
-India	https://www.moneycontrol.com/	The go-to portal for real-time stock market data and retail investor news.
-India	https://www.thehindubusinessline.com/	Known for credibility; strong on commodities and agriculture.
-Indonesia	https://www.thejakartapost.com/business	The premier English daily; highly respected independent voice.
-Indonesia	https://jakartaglobe.id/business	Major competitor; focuses on corporate news and lifestyle business.
-Indonesia	https://en.tempo.co/business	Known for investigative journalism and holding power to account.
-Indonesia	https://en.antaranews.com/business	State news agency; official source for government decrees/stats.
-Indonesia	https://dinsights.katadata.co.id/	(Katadata) Deep dive business intelligence and data analysis.
-Iran	https://www.tehrantimes.com/service/economy	Oldest English daily; state-aligned but covers all major sectors.
-Iran	https://financialtribune.com/	Dedicated non-government economic newspaper; high detail.
-Iran	https://en.mehrnews.com/service/Economy	Semi-official agency; good for energy and infrastructure updates.
-Iran	https://www.presstv.ir/Section/15055	State-run broadcaster; focuses on trade amid sanctions.
-Ireland	https://www.rte.ie/news/business/	"National broadcaster; trusted, timely, and comprehensive."
-Ireland	https://www.irishtimes.com/business	The newspaper of record; excellent corporate and tech coverage.
-Ireland	https://www.businesspost.ie/	Dedicated business Sunday paper; strong on politics and finance.
-Ireland	https://www.siliconrepublic.com/	Leading source for Ireland’s massive tech/startup ecosystem.
-Ireland	https://www.independent.ie/business	Popular daily; covers personal finance and SMEs.
-Israel	https://en.globes.co.il/en/	Israel's dominant business daily; essential for tech and markets.
-Israel	https://www.calcalistech.com/	The tech/business arm of Yedioth Ahronoth; focus on startups.
-Israel	https://www.haaretz.com/israel-news/business	High-quality analysis; critical of monopolies and policy.
-Israel	https://www.jpost.com/business-and-innovation	Broad coverage; strong on international relations and trade.
-Israel	https://www.timesofisrael.com/business/	Digital-first; very popular with the diaspora and investors.
-Italy	https://www.ansa.it/english/news/business/	"Leading wire service; fast, reliable, factual updates."
-Italy	https://24plus.ilsole24ore.com/?lang=en	"(Limited English) The ""Financial Times"" of Italy; check for translated digests."
-Italy	https://www.thelocal.it/business	"Expat focus; covers real estate, tourism, and bureaucracy."
-Italy	https://www.milanofinanza.it/international	Dedicated financial newspaper; covers the Milan stock exchange.
-Japan	https://asia.nikkei.com/	World-class financial journalism; the definitive source for Japan Inc.
-Japan	https://www.japantimes.co.jp/business/	The oldest English daily; excellent independent analysis.
-Japan	https://english.kyodonews.net/news/business/	Leading news agency; fast and strictly factual reporting.
-Japan	https://www.asahi.com/ajw/business/	Major daily; strong on social aspects of business and tech.
-Japan	https://japantoday.com/category/business	Popular aggregator and discussion platform for expats.
-Luxembourg	https://www.luxtimes.lu/en/business-finance	The country's leading English daily; essential for finance/EU news.
-Luxembourg	https://chronicle.lu/category/business	Community-focused; covers local CSR and events.
-Luxembourg	https://delano.lu/section/finance	Magazine/Web; focuses on the financial sector and expats.
-Malaysia	https://theedgemalaysia.com/	The gold standard for financial/corporate news in Malaysia.
-Malaysia	https://www.thestar.com.my/business	Most circulated English daily; massive market reach.
-Malaysia	https://www.nst.com.my/business	Oldest daily; conservative but reliable for policy.
-Malaysia	https://www.malaymail.com/money	Independent; good coverage of consumer economics.
-Malaysia	https://www.freemalaysiatoday.com/category/business/	Digital portal; critical and fast-paced.
-Maldives	https://edition.mv/business	English arm of Mihaaru; the most trusted source.
-Maldives	https://mfr.mv/	"Specialized analysis on tourism, banking, and macroeconomics."
-Maldives	https://corporatemaldives.com/	"Dedicated to business awards, events, and PR."
-Mexico	https://mexiconewsdaily.com/category/news/business/	Subscription-based (with free articles); excellent curation for expats.
-Mexico	https://www.bnamericas.com/en/countries/mexico	Leading project intelligence for infrastructure/energy.
-Mexico	https://mexicobusiness.news/	"Industry-specific analysis (Auto, Oil, Mining)."
-Mexico	https://www.eluniversal.com.mx/english/	English selection of the major daily; sporadically updated.
-Monaco	https://monacolife.net/category/business/	Premier source for residents; covers luxury market and finance.
-Monaco	https://news.mc/category/business/	Frequent updates on local events and real estate.
-Myanmar	https://www.gnlm.com.mm/category/business/	State-run daily; strictly official government narratives.
-Myanmar	https://www.irrawaddy.com/category/business	Independent (Exile/Underground); critical coverage of conflict economy.
-Myanmar	https://www.frontiermyanmar.net/en/category/business/	Award-winning magazine; deep dives into policy and tycoons.
-Nepal	https://kathmandupost.com/money	English daily of Kantipur; highly respected.
-Nepal	https://thehimalayantimes.com/business	Major competitor; strong on stock market and tourism.
-Nepal	https://www.newbusinessage.com/	Monthly business magazine; covers banking and insurance.
-Nepal	https://english.onlinekhabar.com/category/business	Most popular digital portal; fast updates.
-Netherlands	https://www.dutchnews.nl/category/business/	Leading daily for international community.
-Netherlands	https://nltimes.nl/category/business	Frequent updates; covers corporate crime and labor.
-Netherlands	https://www.iamexpat.nl/business	Lifestyle/Business mix; good for tax and freelance info.
-Netherlands	https://fd.nl/	"Dutch. The """"Financial Times"""" of NL. (Use Translate)."
-New Zealand	https://www.nzherald.co.nz/business/	The country's largest paper; comprehensive market coverage.
-New Zealand	https://www.stuff.co.nz/business	Very popular digital source; covers consumer and SME news.
-New Zealand	https://www.nbr.co.nz/	(Paywall) Premium independent business journalism.
-New Zealand	https://www.interest.co.nz/	"Specialized in interest rates, property, and banking data."
-New Zealand	https://businessdesk.co.nz/	Professional wire service for serious investors.
-Nigeria	https://businessday.ng/	West Africa's leading provider of business intelligence.
-Nigeria	https://nairametrics.com/	"Excellent for financial literacy, stock data, and crypto."
-Nigeria	https://guardian.ng/category/business-services/	Respected daily; conservative and thorough.
-Nigeria	https://www.vanguardngr.com/category/business/	Mass-market daily; strong on energy and labor.
-Nigeria	https://www.proshareng.com/	Specialized market intelligence and financial analysis.
-Norway	https://www.dn.no/	Norwegian. The main business daily (Use Translate).
-Norway	https://www.newsinenglish.no/	Independent news digest for expats.
-Norway	https://www.thelocal.no/business	"Covers work culture, unions, and local industry."
-Norway	https://e24.no/	Norwegian. Largest digital business news site.
-Pakistan	https://www.brecorder.com/	The financial daily of Pakistan; essential for markets/tax.
-Pakistan	https://www.dawn.com/business	The most prestigious English daily; critical and independent.
-Pakistan	https://profit.pakistantoday.com.pk/	"Modern, analytical, and focused on tech/startups."
-Pakistan	https://www.thenews.com.pk/latest/category/business	Mass circulation; strong on textile and export news.
-Pakistan	https://propakistani.pk/category/business/	"Digital-first; covers telecom, tech, and economy."
-Philippines	https://www.bworldonline.com/	The country's leading business newspaper; highly respected.
-Philippines	https://www.philstar.com/business	Mass market; strong on corporate earnings and retail.
-Philippines	https://business.inquirer.net/	Major daily; aggressive coverage of monopolies/policy.
-Philippines	https://www.rappler.com/business/	Digital-first; investigative and critical.
-Philippines	https://mb.com.ph/category/business	Oldest running paper; conservative; strong shipping section.
-Poland	https://www.thefirstnews.com/category/business	(PAP) National agency's English service; high volume.
-Poland	https://notesfrompoland.com/category/business/	Independent academic blog turned news site; excellent context.
-Poland	https://tvpworld.com/category/business	State broadcaster; focuses on Polish exports and energy.
-Poland	https://wbj.pl/	English language monthly; covers real estate and law.
-Portugal	https://www.theportugalnews.com/news/business	"Largest English weekly; covers tourism, property, and tax."
-Portugal	https://echoboomer.pt/en/	(Economic Online) Digital financial news; increasingly offers English.
-Portugal	https://www.portugalresident.com/business/	Expat-focused; reliable for local business updates.
-Qatar	https://thepeninsulaqatar.com/category/business	Leading English daily; comprehensive coverage of energy/banking.
-Qatar	https://www.gulf-times.com/category/Business	Oldest English newspaper; strong on local market trends.
-Qatar	https://www.qatar-tribune.com/section/business	Trusted source for corporate news and real estate.
-Qatar	https://dohanews.co/category/business/	Independent digital news; popular and modern format.
-Romania	https://www.romania-insider.com/business	The most read English news portal; excellent daily newsletter.
-Romania	https://business-review.eu/	Dedicated English business magazine; covers FDI and real estate.
-Romania	https://www.romaniajournal.ro/business/	Online daily; focuses on macroeconomics and IT sector.
-Romania	https://www.nineoclock.ro/	The oldest English-language diplomatic/business newspaper.
-Russia	https://www.themoscowtimes.com/business	Independent (now in exile); critical coverage of sanctions/economy.
-Russia	https://tass.com/economy	State news agency; official Kremlin statistics and viewpoint.
-Russia	https://interfax.com/	Independent agency; specialized professional market intelligence.
-Russia	https://www.intellinews.com/russia/	Regional business intelligence; focuses on emerging markets.
-Saudi Arabia	https://www.arabnews.com/business-economy	The leading English daily; essential for Vision 2030 updates.
-Saudi Arabia	https://saudigazette.com.sa/section/business	Major competitor; strong on regulation and labor laws.
-Saudi Arabia	https://www.argaam.com/en	Specialized financial portal; deep data on the Saudi Stock Exchange (Tadawul).
-Saudi Arabia	https://www.zawya.com/en/business	(Refinitiv) Top regional business intelligence aggregator.
-Singapore	https://www.businesstimes.com.sg/	The premier financial daily; comparable to WSJ/FT for SE Asia.
-Singapore	https://www.straitstimes.com/business	National daily; covers general corporate news and markets.
-Singapore	https://www.channelnewsasia.com/business	(Channel NewsAsia) excellent TV/Web coverage of Asian markets.
-Singapore	https://sbr.com.sg/	Industry-focused magazine; good for sector rankings.
-Singapore	https://www.dealstreetasia.com/	"Specialized in PE, VC, and startup investment news."
-South Africa	https://www.businesslive.co.za/bd/	The country's most prestigious business newspaper.
-South Africa	https://www.news24.com/fin24	Massive digital reach; rapid updates on markets/personal finance.
-South Africa	https://www.moneyweb.co.za/	Investment-focused; excellent podcast and market data.
-South Africa	https://www.dailymaverick.co.za/section/business-maverick/	"Independent, investigative, and high-quality analysis."
-South Africa	https://www.engineeringnews.co.za/	"Specialized in mining, construction, and industrial sectors."
-South Korea	https://en.yna.co.kr/business/index	Key news agency; fast and factual.
-South Korea	https://www.koreaherald.com/business/	Largest English daily; covers chaebols (conglomerates) extensively.
-South Korea	https://pulsenews.co.kr/	English arm of the leading business daily Maeil Business.
-South Korea	https://koreajoongangdaily.joins.com/section/business	Associated with NYT; high-quality features.
-South Korea	https://www.koreatimes.co.kr/www/sub_list_123.html	Oldest English daily; good general overview.
-Spain	https://english.elpais.com/economy_and_business/	Spain's newspaper of record; high-quality translations.
-Spain	https://www.thelocal.es/business	Expat focus; covers employment law and property.
-Spain	https://www.surinenglish.com/business/	Southern Spain focus (Malaga); business and tourism news.
-Spain	https://www.merca2.es/	Spanish. Digital business daily.
-Sri Lanka	https://www.ft.lk/	The only dedicated business daily; essential reading.
-Sri Lanka	https://www.lankabusinessonline.com/	Digital portal; fast updates on stocks and policy.
-Sri Lanka	https://economynext.com/	Independent; rigorous analysis of the debt crisis.
-Sri Lanka	https://island.lk/category/business/	respected daily; strong critiques of government policy.
-Sweden	https://www.thelocal.se/business	Essential for expats; covers tech scene (Spotify/Klarna) and unions.
-Sweden	https://www.di.se/	Swedish. The financial Bible of Sweden (Use Translate).
-Sweden	https://www.stjernan.se/	(Sporadic) Independent news blog.
-Sweden	https://www.investstockholm.com/news/	Official agency; excellent for tech/startup news.
-Switzerland	https://www.swissinfo.ch/eng/business	"Public broadcaster; in-depth features on pharma, banking, and watches."
-Switzerland	https://www.thelocal.ch/business	Daily updates for the international workforce.
-Switzerland	https://www.finews.com/	Specialized news for the Swiss financial center.
-Switzerland	https://genevasolutions.news/	Focuses on international development and sustainable finance.
-Syria	http://sana.sy/en/?cat=6	State news agency; strictly government viewpoint.
-Syria	https://english.enabbaladi.net/archives/category/economy/	Independent/Opposition; covers war economy and reconstruction.
-Syria	https://www.syria-report.com/	(Subscription) High-quality economic data and analysis.
-Taiwan	https://www.taipeitimes.com/News/biz	Leading English daily; excellent coverage of semi-conductors/tech.
-Taiwan	https://focustaiwan.tw/business	"(CNA) National news agency; fast, factual updates."
-Taiwan	https://www.taiwannews.com.tw/en/cate/2	Popular digital portal; covers expat interests and trade.
-Taiwan	https://www.digitimes.com/	Global authority on the electronics and semiconductor supply chain.
-Thailand	https://www.bangkokpost.com/business	The oldest and most respected English daily in Thailand.
-Thailand	https://www.nationthailand.com/business	"Major competitor; covers tourism, auto, and retail sectors."
-Thailand	https://www.thaienquirer.com/category/market-watch/	Digital-first; independent and critical analysis.
-Turkey	https://www.dailysabah.com/business	Pro-government daily; massive reach and detailed policy news.
-Turkey	https://www.hurriyetdailynews.com/c/economy	Oldest English daily; focuses on markets and tourism.
-Turkey	https://www.aa.com.tr/en/economy	State agency; official statistics and government viewpoint.
-Turkey	https://www.duvarenglish.com/economy	Independent digital outlet; critical of government economic policy.
-Ukraine	https://kyivindependent.com/business/	Top independent source; covers war economy and reconstruction.
-Ukraine	https://en.interfax.com.ua/	Professional wire service; essential for energy/grain data.
-Ukraine	https://www.ukrinform.net/rubric-economy	State news agency; official government viewpoint.
-Ukraine	https://ubn.news/	Excellent daily newsletter summarizing investment news.
-UAE	https://www.thenationalnews.com/business/	Abu Dhabi-based; world-class journalism on energy/markets.
-UAE	https://gulfnews.com/business	Dubai-based; mass market daily with huge reach.
-UAE	https://www.khaleejtimes.com/business	"Oldest English daily; covers retail, gold, and property."
-UAE	https://www.arabianbusiness.com/	"Leading magazine; focuses on CEOs, wealth, and lifestyle."
-UAE	https://www.wam.ae/en/category/economics	Emirates News Agency; official source for decrees.
-United Kingdom	https://www.ft.com/	Global standard for financial journalism.
-United Kingdom	https://www.cityam.com/	"London-centric; focuses on the ""Square Mile"" financial district."
-United Kingdom	https://www.telegraph.co.uk/business/	Conservative daily; strong on policy and traditional industry.
-United Kingdom	https://www.bbc.com/news/business	National broadcaster; reliable for consumer and macro news.
-United Kingdom	https://www.reuters.com/world/uk/	Global agency with a massive London bureau.
-United States	https://www.wsj.com/	The definitive US financial newspaper.
-United States	https://www.bloomberg.com/	The leader in real-time market data and financial tech.
-United States	https://www.cnbc.com/	Leading business news broadcaster and digital portal.
-United States	https://www.forbes.com/	"Focuses on wealth, entrepreneurship, and rankings."
-United States	https://www.businessinsider.com/	"Digital-first; covers tech, markets, and trends."
-Vatican City	https://www.vaticannews.va/en.html	Official portal.
-Vatican City	N/A	Non-commercial state. No business press.
-Vietnam	https://e.vnexpress.net/news/business	Most popular digital paper; covers all sectors.
-Vietnam	https://vietnamnews.vn/economy	National English daily; official but comprehensive.
-Vietnam	https://vir.com.vn/	(VIR) Dedicated to foreign investment and corporate law.
-Vietnam	https://english.thesaigontimes.vn/	Focuses on Ho Chi Minh City business hub.
-Vietnam	https://tuoitrenews.vn/business	Popular daily; covers consumer trends and youth.
-International	https://www.economist.com/	The premier weekly for global economic and political analysis.
-International	https://hbr.org/	The gold standard for academic management and leadership strategy.
-International	https://fortune.com/	"Famous for the ""Fortune 500""; covers leadership and corporate trends."
-International	https://www.barrons.com/	Weekly sister paper to WSJ; strictly focused on stocks and active investing.
-International	https://qz.com/	"Digital-native; focuses on the ""new global economy,"" tech, and Africa/Asia dynamics."
-International	https://www.project-syndicate.org/	"The ""Op-Ed page of the world""; features exclusive columns from Nobel economists."
-International	https://www.marketwatch.com/	Real-time market data and personal finance; sister to Barron's/WSJ.
-International	https://techcrunch.com/	The industry bible for venture capital
-International	https://www.theafricareport.com/	Paris-based English monthly; excellent for politics and business across Africa.
-International	https://african.business/	London-based; focuses on banking
-International	https://www.meed.com/	The primary source for project news
-International	https://thediplomat.com/	Focuses on the intersection of Asian geopolitics
-International	https://www.euronews.com/	Lyon-based; covers EU regulatory news and European markets (Business section).
-International	https://www.inc.com/	Dedicated to small businesses
-International	https://www.fastcompany.com/	Focuses on technology
-International	https://www.entrepreneur.com/	Practical advice and news for small business owners and franchising.
-International	https://www.technologyreview.com/	(MIT) Deep analysis of how emerging technologies impact the economy.
-International	https://seekingalpha.com/	Crowdsourced financial analysis; heavily used by retail investors for stock research.
-International	https://www.theinformation.com/	Subscription-only; known for high-level scoops in the tech industry.
-International	https://venturebeat.com/	Focuses on transformative tech
-International	https://www.coindesk.com/	The leading source for the cryptocurrency and blockchain economy.
-International	https://oilprice.com/	The most widely read source for crude oil prices and energy market news.
-International	https://www.weforum.org/	"Blogs and reports on the """"Fourth Industrial Revolution"""" and global risks."
-International	https://www.foreignaffairs.com/	Essential for understanding the political framework of the global economy.
-International	https://sifted.eu/	Backed by the FT; covers the European startup and VC ecosystem.
-International	https://www.dealstreetasia.com/	Tracks private equity and venture capital deals across ASEAN/India.
-International	https://www.businessoffashion.com/	The authoritative voice on the global fashion economy.
-International	https://skift.com/	Leading intelligence for the business of travel
-International	https://www.morningstar.com/	Independent investment research; key for mutual funds and ETFs.
-International	https://www.investopedia.com/	While educational 
-International	https://www.ibtimes.com/	Mass-market global business news with editions in multiple countries.
-International	https://www.yicaiglobal.com/	English arm of China’s largest financial media group; deep data.
-International	https://www.intellinews.com/	Focuses on Eastern Europe
-International	https://www.thebanker.com/	Owned by FT; specialized monthly for the global banking sector.
-International	https://www.pionline.com/	The newspaper of record for institutional money management.
-International	https://www.institutionalinvestor.com/	Focuses on hedge funds
-International	https://www.privateequityinternational.com/	Specialized intelligence for the private equity asset class.
-International	https://variety.com/	The business of Hollywood and global media.
-International	https://adage.com/	Covering the business of brands
-International	https://www.thestreet.com/	Founded by Jim Cramer; active trading and market news.
+ï»¿Country	News Portal Link	Notes
+Global	http://feeds.feedburner.com/adb_news	Asian Development Bank (ADB)
+Argentina	https://www.batimes.com.ar/feed	batimes.com.ar
+Argentina	https://en.mercopress.com/rss/	en.mercopress.com
+Argentina	https://www.thebubble.com/feed	thebubble.com
+Argentina	https://argentinareports.com/rss	argentinareports.com
+Australia	https://www.afr.com/feed	afr.com
+Australia	https://www.theaustralian.com.au/feed	theaustralian.com.au
+Australia	https://www.smartcompany.com.au/feed/	smartcompany.com.au
+Australia	https://www.abc.net.au/feed	abc.net.au
+Austria	https://www.vienna.at/feed	vienna.at
+Azerbaijan	https://www.azernews.az/feed	azernews.az
+Azerbaijan	https://en.trend.az/rss	en.trend.az
+Azerbaijan	https://apa.az/rss	apa.az
+Azerbaijan	https://www.turan.az/feed	turan.az
+Azerbaijan	https://keysolutions.uk.com/feed/	caspianenergy.net
+Bahrain	https://www.gdnonline.com/feed	gdnonline.com
+Bahrain	https://www.bahrainthismonth.com/feed	bahrainthismonth.com
+Bahrain	https://www.bizbahrain.com/feed/	bizbahrain.com
+Bangladesh	https://www.thedailystar.net/rss.xml	thedailystar.net
+Bangladesh	https://thefinancialexpress.com.bd/feed	thefinancialexpress.com.bd
+Bangladesh	https://www.tbsnews.net/rss.xml	tbsnews.net
+Bangladesh	https://www.dhakatribune.com/feed/business	dhakatribune.com
+Belgium	https://www.brusselstimes.com/feed	brusselstimes.com
+Belgium	https://www.vrt.be/feed	vrt.be
+Belgium	https://www.politico.eu/feed/	politico.eu
+Belgium	https://www.xpats.com/rss.xml	xpats.com
+Bhutan	https://kuenselonline.com/feed	kuenselonline.com
+Bhutan	https://thebhutanese.bt/feed/	thebhutanese.bt
+Bhutan	https://businessbhutan.bt/feed/	businessbhutan.bt
+Brazil	https://www.riotimesonline.com/feed/	riotimesonline.com
+Brazil	https://braziljournal.com/feed	braziljournal.com
+Brazil	https://www1.folha.uol.com.br/feed	www1.folha.uol.com.br
+Brazil	https://agenciabrasil.ebc.com.br/rss.xml	agenciabrasil.ebc.com.br
+Brazil	https://www.valor.com.br/rss	valor.com.br
+Cambodia	https://phnompenhpost.com/feed/	phnompenhpost.com
+Cambodia	https://cambodiainvestmentreview.com/feed/	cambodiainvestmentreview.com
+Cambodia	https://www.kiripost.com/feed	kiripost.com
+Canada	https://financialpost.com/rss	financialpost.com
+Canada	https://www.theglobeandmail.com/feed	theglobeandmail.com
+Canada	https://www.bnnbloomberg.ca/feed	bnnbloomberg.ca
+Canada	http://www.thestar.com/search/?f=rss&t=article&c=business&l=50&s=start_time&sd=desc	thestar.com
+Canada	https://www.canadianbusiness.com/rss	canadianbusiness.com
+China	https://www.caixinglobal.com/feed	caixinglobal.com
+China	https://www.scmp.com/rss/92/feed	scmp.com
+China	https://www.shine.cn/feed	shine.cn
+China	https://www.chinadaily.com.cn/feed	chinadaily.com.cn
+China	https://www.yicaiglobal.com/feed	yicaiglobal.com
+Croatia	https://total-croatia-news.com/feed/	total-croatia-news.com
+Croatia	https://www.croatiaweek.com/category/business/feed/	croatiaweek.com
+Croatia	https://n1info.hr/feed	n1info.hr
+Cuba	https://havanatimes.org/rss	havanatimes.org
+Cuba	https://oncubanews.com/rss	oncubanews.com
+Cuba	https://en.granma.cu/feed	en.granma.cu
+Denmark	https://cphpost.dk/feed	cphpost.dk
+Denmark	https://feeds.thelocal.com/rss/dk	thelocal.dk
+Denmark	https://scandasia.com/feed/	scandasia.com
+Estonia	https://news.err.ee/rss	news.err.ee
+Estonia	https://www.baltictimes.com/rss	baltictimes.com
+Estonia	https://estonianworld.com/feed/	estonianworld.com
+Estonia	https://investinestonia.com/feed	investinestonia.com
+Finland	https://yle.fi/feed	yle.fi
+Finland	https://www.helsinkitimes.fi/feed	helsinkitimes.fi
+Finland	https://www.goodnewsfinland.com/feed	goodnewsfinland.com
+Finland	https://www.dailyfinland.fi/feed	dailyfinland.fi
+France	https://www.france24.com/en/business-tech/rss	france24.com
+France	https://www.rfi.fr/rss	rfi.fr
+France	https://feeds.thelocal.com/rss/fr	thelocal.fr
+France	https://www.lemonde.fr/feed	lemonde.fr
+France	https://www.frenchtechjournal.com/latest/rss/	frenchtechjournal.com
+Georgia	https://civil.ge/rss	civil.ge
+Georgia	https://agenda.ge/feed	agenda.ge
+Georgia	https://www.financial.ge/feed	financial.ge
+Georgia	http://georgiatoday.ge/feed	georgiatoday.ge
+Germany	https://www.handelsblatt.com/contentexport/feed/rss/schlagzeilen	handelsblatt.com
+Germany	https://www.dw.com/feed	dw.com
+Germany	https://www.cleanenergywire.org/rss.xml	cleanenergywire.org
+Germany	https://www.munich-startup.de/feed	munich-startup.de
+Ghana	https://www.graphic.com.gh/business.feed?type=rss	graphic.com.gh
+Ghana	https://citibusinessnews.com/feed	citibusinessnews.com
+Ghana	https://thebftonline.com/feed/	thebftonline.com
+Ghana	https://www.myjoyonline.com/feed/	myjoyonline.com
+Ghana	https://www.ghanaweb.com/feed	ghanaweb.com
+Greece	https://www.ekathimerini.com/feed	ekathimerini.com
+Greece	https://www.naftemporiki.gr/feed/	naftemporiki.gr
+Greece	https://greekreporter.com/feed/	greekreporter.com
+Greece	https://www.capital.gr/rss	capital.gr
+Guinea	https://www.businessinguinea.com/feed	businessinguinea.com
+Guinea	https://www.mining.com/rss	mining.com
+Hungary	https://bbj.hu/feed	bbj.hu
+Hungary	https://www.portfolio.hu/en/rss/all.xml	portfolio.hu
+Hungary	https://hungarytoday.hu/rss	hungarytoday.hu
+Hungary	https://dailynewshungary.com/feed/	dailynewshungary.com
+Iceland	https://icelandmonitor.mbl.is/rss	icelandmonitor.mbl.is
+Iceland	https://www.icelandreview.com/rss	icelandreview.com
+Iceland	https://www.businessiceland.is/feed	businessiceland.is
+Iceland	https://www.northstack.is/rss/	northstack.is
+India	https://economictimes.indiatimes.com/feed	economictimes.indiatimes.com
+India	https://www.livemint.com/feed	livemint.com
+India	https://www.business-standard.com/feed	business-standard.com
+India	https://www.moneycontrol.com/rss/latestnews.xml	moneycontrol.com
+India	https://www.thehindubusinessline.com/feeder/default.rss	thehindubusinessline.com
+Indonesia	https://www.thejakartapost.com/feed	thejakartapost.com
+Indonesia	https://jakartaglobe.id/feed	jakartaglobe.id
+Indonesia	https://en.antaranews.com/feed	en.antaranews.com
+Indonesia	https://dinsights.katadata.co.id/feed	dinsights.katadata.co.id
+Iran	https://www.tehrantimes.com/rss	tehrantimes.com
+Iran	https://financialtribune.com/rss.xml	financialtribune.com
+Iran	https://en.mehrnews.com/feed	en.mehrnews.com
+Iran	https://www.presstv.ir/rss.xml	presstv.ir
+Ireland	https://www.rte.ie/feeds/rss/?index=/news/business/	rte.ie
+Ireland	https://www.irishtimes.com/feed	irishtimes.com
+Ireland	https://www.siliconrepublic.com/feed	siliconrepublic.com
+Ireland	https://www.independent.ie/rss	independent.ie
+Israel	https://en.globes.co.il/WebService/RssFeed.asmx	en.globes.co.il
+Israel	https://www.calcalistech.com/feed	calcalistech.com
+Israel	https://www.haaretz.com/feed	haaretz.com
+Israel	https://www.jpost.com/feed	jpost.com
+Israel	https://www.timesofisrael.com/feed	timesofisrael.com
+Italy	https://www.ansa.it/rss.xml	ansa.it
+Italy	https://24plus.ilsole24ore.com/feed	24plus.ilsole24ore.com
+Italy	https://feeds.thelocal.com/rss/it	thelocal.it
+Japan	https://asia.nikkei.com/feed	asia.nikkei.com
+Japan	https://www.japantimes.co.jp/feed/topstories/	japantimes.co.jp
+Japan	https://english.kyodonews.net/rss/all.xml	english.kyodonews.net
+Japan	https://www.asahi.com/feed	asahi.com
+Japan	https://japantoday.com/category/business/feed	japantoday.com
+Luxembourg	https://www.luxtimes.lu/rss	luxtimes.lu
+Malaysia	https://theedgemalaysia.com/feed	theedgemalaysia.com
+Malaysia	https://www.thestar.com.my/feed	thestar.com.my
+Malaysia	https://www.nst.com.my/feed	nst.com.my
+Malaysia	https://www.malaymail.com/feed	malaymail.com
+Malaysia	https://www.freemalaysiatoday.com/feed	freemalaysiatoday.com
+Maldives	https://edition.mv/feed	edition.mv
+Maldives	https://mfr.mv/feed	mfr.mv
+Maldives	https://corporatemaldives.com/feed/	corporatemaldives.com
+Mexico	https://mexiconewsdaily.com/rss	mexiconewsdaily.com
+Mexico	https://mexicobusiness.news/feed	mexicobusiness.news
+Mexico	http://www.eluniversal.com.mx/rss/finanzas.xml	eluniversal.com.mx
+Monaco	https://monacolife.net/rss	monacolife.net
+Monaco	https://news.mc/feed/	news.mc
+Myanmar	https://www.gnlm.com.mm/feed/	gnlm.com.mm
+Myanmar	https://www.irrawaddy.com/feed	irrawaddy.com
+Myanmar	https://www.frontiermyanmar.net/en/category/business/feed/	frontiermyanmar.net
+Nepal	https://kathmandupost.com/rss	kathmandupost.com
+Nepal	https://thehimalayantimes.com/feed	thehimalayantimes.com
+Nepal	https://newbusinessage.com/feed/	newbusinessage.com
+Nepal	https://english.onlinekhabar.com/rss	english.onlinekhabar.com
+Netherlands	https://www.dutchnews.nl/feed	dutchnews.nl
+Netherlands	https://nltimes.nl/rss	nltimes.nl
+Netherlands	?rss	fd.nl
+New Zealand	https://www.nzherald.co.nz/feed	nzherald.co.nz
+New Zealand	https://www.stuff.co.nz/feed	stuff.co.nz
+New Zealand	https://www.nbr.co.nz/feed	nbr.co.nz
+New Zealand	https://www.interest.co.nz/rss	interest.co.nz
+New Zealand	https://businessdesk.co.nz/feed	businessdesk.co.nz
+Nigeria	https://businessday.ng/feed/	businessday.ng
+Nigeria	https://nairametrics.com/feed/	nairametrics.com
+Nigeria	https://guardian.ng/category/business-services/feed/	guardian.ng
+Nigeria	https://www.vanguardngr.com/rss	vanguardngr.com
+Nigeria	https://www.proshareng.com/feed	proshareng.com
+Norway	https://www.dn.no/rss	dn.no
+Norway	https://www.newsinenglish.no/feed/	newsinenglish.no
+Norway	https://feeds.thelocal.com/rss/no	thelocal.no
+Norway	https://e24.no/rss	e24.no
+Pakistan	https://www.brecorder.com/rss	brecorder.com
+Pakistan	https://www.dawn.com/feed	dawn.com
+Pakistan	https://profit.pakistantoday.com.pk/feed/	profit.pakistantoday.com.pk
+Pakistan	https://www.thenews.com.pk/feed	thenews.com.pk
+Pakistan	https://propakistani.pk/feed	propakistani.pk
+Philippines	https://www.bworldonline.com/feed	bworldonline.com
+Philippines	https://www.philstar.com/feed	philstar.com
+Philippines	https://business.inquirer.net/feed	business.inquirer.net
+Philippines	https://www.rappler.com/feed/	rappler.com
+Philippines	https://mb.com.ph/rss-feed	mb.com.ph
+Poland	https://www.thefirstnews.com/feed	thefirstnews.com
+Poland	https://notesfrompoland.com/feed/	notesfrompoland.com
+Poland	https://wbj.pl/feed	wbj.pl
+Portugal	https://echoboomer.pt/feed	echoboomer.pt
+Portugal	https://www.portugalresident.com/rss	portugalresident.com
+Qatar	https://thepeninsulaqatar.com/feed	thepeninsulaqatar.com
+Qatar	https://dohanews.co/rss	dohanews.co
+Romania	https://www.romania-insider.com/feed	romania-insider.com
+Romania	https://business-review.eu/feed	business-review.eu
+Romania	https://www.romaniajournal.ro/feed/	romaniajournal.ro
+Romania	https://www.nineoclock.ro/feed/	nineoclock.ro
+Russia	https://www.themoscowtimes.com/feed	themoscowtimes.com
+Russia	https://tass.com/feed	tass.com
+Russia	https://interfax.com/feed	interfax.com
+Saudi Arabia	https://www.arabnews.com/rss	arabnews.com
+Saudi Arabia	https://saudigazette.com.sa/rssFeed/74	saudigazette.com.sa
+Saudi Arabia	https://www.argaam.com/feed	argaam.com
+Saudi Arabia	https://www.zawya.com/sitemaps/en/rss	zawya.com
+Singapore	https://www.businesstimes.com.sg/feed	businesstimes.com.sg
+Singapore	https://www.straitstimes.com/news/business/rss.xml	straitstimes.com
+Singapore	https://www.channelnewsasia.com/feed	channelnewsasia.com
+Singapore	https://sbr.com.sg/feed	sbr.com.sg
+Singapore	https://www.dealstreetasia.com/feed	dealstreetasia.com
+South Africa	https://www.businesslive.co.za/feed	businesslive.co.za
+South Africa	https://feeds.24.com/articles/business/topstories/rss	news24.com
+South Africa	https://www.moneyweb.co.za/feed	moneyweb.co.za
+South Africa	https://www.dailymaverick.co.za/feed	dailymaverick.co.za
+South Africa	https://www.engineeringnews.co.za/feeds/latest-news.xml	engineeringnews.co.za
+South Korea	https://en.yna.co.kr/RSS/news.xml	en.yna.co.kr
+South Korea	https://www.koreaherald.com/rss/newsAll	koreaherald.com
+South Korea	https://pulsenews.co.kr/feed	pulsenews.co.kr
+South Korea	https://feeds.buzzsprout.com/1701220.rss	koreajoongangdaily.joins.com
+South Korea	https://feed.koreatimes.co.kr/k/allnews.xml	koreatimes.co.kr
+Spain	https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/in-english	english.elpais.com
+Spain	https://feeds.thelocal.com/rss/es	thelocal.es
+Spain	https://www.merca2.es/feed	merca2.es
+Sri Lanka	https://www.ft.lk/feed	ft.lk
+Sri Lanka	https://www.lankabusinessonline.com/feed/	lankabusinessonline.com
+Sri Lanka	https://economynext.com/feed/	economynext.com
+Sri Lanka	http://island.lk/feed/	island.lk
+Sweden	https://www.thelocal.se/feed/	thelocal.se
+Sweden	https://www.di.se/feed	di.se
+Sweden	https://www.stjernan.se/feed	stjernan.se
+Sweden	https://www.investstockholm.com/feed	investstockholm.com
+Switzerland	https://www.swissinfo.ch/feed	swissinfo.ch
+Switzerland	https://feeds.thelocal.com/rss/ch	thelocal.ch
+Switzerland	https://www.finews.com/news/english-news?format=feed&type=rss	finews.com
+Switzerland	https://genevasolutions.news/feed	genevasolutions.news
+Syria	https://sana.sy/en/?feed=rss2	sana.sy
+Syria	https://english.enabbaladi.net/archives/category/economy/feed/	english.enabbaladi.net
+Syria	https://www.syria-report.com/feed	syria-report.com
+Taiwan	https://www.taipeitimes.com/feed	taipeitimes.com
+Taiwan	https://focustaiwan.tw/feed	focustaiwan.tw
+Taiwan	https://www.taiwannews.com.tw/feed	taiwannews.com.tw
+Taiwan	https://www.digitimes.com/rss/daily.xml	digitimes.com
+Thailand	https://www.bangkokpost.com/rss	bangkokpost.com
+Thailand	https://www.nationthailand.com/feed	nationthailand.com
+Thailand	https://www.thaienquirer.com/feed/	thaienquirer.com
+Turkey	https://www.dailysabah.com/rss	dailysabah.com
+Turkey	https://www.hurriyetdailynews.com/rss	hurriyetdailynews.com
+Turkey	https://www.aa.com.tr/en/rss/	aa.com.tr
+Turkey	https://www.duvarenglish.com/feed	duvarenglish.com
+Ukraine	https://kyivindependent.com/feed	kyivindependent.com
+Ukraine	https://en.interfax.com.ua/feed	en.interfax.com.ua
+Ukraine	https://www.ukrinform.net/rss//rubric-economy	ukrinform.net
+UAE	https://www.thenationalnews.com/business/rss	thenationalnews.com
+UAE	https://gulfnews.com/feed	gulfnews.com
+UAE	https://www.arabianbusiness.com/feed	arabianbusiness.com
+UAE	https://www.wam.ae/feed	wam.ae
+United Kingdom	https://www.cityam.com/feed/	cityam.com
+United Kingdom	https://www.telegraph.co.uk/feed	telegraph.co.uk
+United Kingdom	https://feeds.bbci.co.uk/news/business/rss.xml	bbc.com
+United States	https://feeds.bloomberg.com/markets/news.rss	bloomberg.com
+United States	https://www.cnbc.com/id/10001147/device/rss/rss.html	cnbc.com
+United States	https://www.forbes.com/feed	forbes.com
+United States	https://feeds.businessinsider.com/custom/all	businessinsider.com
+Vatican City	https://www.vaticannews.va/en.rss.xml	vaticannews.va
+Vietnam	https://e.vnexpress.net/feed	e.vnexpress.net
+Vietnam	https://vietnamnews.vn/feed	vietnamnews.vn
+Vietnam	https://vir.com.vn/rss_feed/	vir.com.vn
+Vietnam	https://english.thesaigontimes.vn/feed/	english.thesaigontimes.vn
+Vietnam	https://tuoitre.vn/rss.htm	tuoitrenews.vn
+International	https://hbr.org/feed	hbr.org
+International	https://fortune.com/feed	fortune.com
+International	https://qz.com/feed	qz.com
+International	https://www.project-syndicate.org/feed	project-syndicate.org
+International	https://techcrunch.com/feed/	techcrunch.com
+International	https://www.theafricareport.com/feed/	theafricareport.com
+International	https://african.business/feed/	african.business
+International	https://www.meed.com/feed	meed.com
+International	https://thediplomat.com/feed	thediplomat.com
+International	https://www.euronews.com/feed	euronews.com
+International	https://www.fastcompany.com/latest/rss	fastcompany.com
+International	https://www.entrepreneur.com/feed	entrepreneur.com
+International	https://www.technologyreview.com/feed	technologyreview.com
+International	https://seekingalpha.com/feed	seekingalpha.com
+International	https://venturebeat.com/feed/	venturebeat.com
+International	https://www.coindesk.com/feed	coindesk.com
+International	https://oilprice.com/rss.xml	oilprice.com
+International	https://www.weforum.org/feed	weforum.org
+International	https://www.foreignaffairs.com/rss.xml	foreignaffairs.com
+International	https://sifted.eu/feed	sifted.eu
+International	https://www.dealstreetasia.com/feed	dealstreetasia.com
+International	https://www.businessoffashion.com/arc/outboundfeeds/rss/	businessoffashion.com
+International	https://skift.com/feed	skift.com
+International	https://www.morningstar.com/feed	morningstar.com
+International	https://www.ibtimes.com/rss	ibtimes.com
+International	https://www.yicaiglobal.com/feed	yicaiglobal.com
+International	https://www.intellinews.com/feed/	intellinews.com
+International	https://www.thebanker.com/feed	thebanker.com
+International	https://www.pionline.com/feed	pionline.com
+International	https://www.institutionalinvestor.com/rss.xml	institutionalinvestor.com
+International	https://www.privateequityinternational.com/feed	privateequityinternational.com
+International	https://variety.com/rss	variety.com
+International	https://adage.com/feed	adage.com
+United States	https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml	WSJ Business
+United States	https://feeds.bloomberg.com/markets/news.rss	Bloomberg
+United Kingdom	https://www.ft.com/?format=rss	Financial Times
+Asia-Pacific	https://www.scmp.com/rss/91/feed	SCMP Economy
+United States	https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114	CNBC
+Bangladesh	https://en.prothomalo.com/feed	Prothom Alo
+Bangladesh	https://bdnews24.com/business/?widgetName=rssfeed&widgetId=1150&getXml=1	bdnews24
+Bangladesh	https://www.tbsnews.net/rss.xml	The Business Standard
+India	https://economictimes.indiatimes.com/rssfeedstopstories.cms	Economic Times
+Asia-Pacific	https://www.straitstimes.com/news/business/rss.xml	Straits Times
+Global	https://news.un.org/feed/subscribe/en/news/topic/economic-development/feed/rss.xml	UN News
+Asia-Pacific	https://thediplomat.com/feed/	The Diplomat
+United Kingdom	https://feeds.bbci.co.uk/news/business/rss.xml	BBC Business
+Global	https://www.aljazeera.com/xml/rss/all.xml	Al Jazeera Economy
+Global	https://rss.dw.com/xml/rss-en-bus	DW Business
