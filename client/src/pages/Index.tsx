@@ -276,15 +276,10 @@ const Index = () => {
 
               {/* Magnitude Slider Filter */}
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    Impact Magnitude
-                  </span>
-                  <span className="text-xs font-mono font-bold bg-muted px-2 py-0.5 rounded text-muted-foreground">
-                    Min Score: {magnitudeValue}
-                  </span>
-                </div>
-                <div className="pt-2">
+                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  Impact Magnitude
+                </span>
+                <div className="relative pt-2 pb-6">
                   <input
                     type="range"
                     min="0"
@@ -293,30 +288,12 @@ const Index = () => {
                     onChange={(e) => setMagnitudeValue(Number(e.target.value))}
                     className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary border border-border"
                   />
-                  <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-1 px-0.5">
-                    <span>0 (All)</span>
-                    <span>30 (Notable)</span>
-                    <span>70 (Sectoral)</span>
-                    <span>90 (Systemic)</span>
+                  <div
+                    className="absolute mt-2 transform -translate-x-1/2 bg-primary/10 text-primary border border-primary/20 shadow-sm rounded px-2 py-0.5 text-[10px] font-mono font-bold whitespace-nowrap pointer-events-none"
+                    style={{ left: `${magnitudeValue}%` }}
+                  >
+                    {magnitudeValue}({sliderInfo.label})
                   </div>
-                </div>
-                <div className="bg-background/50 border border-border rounded-lg p-2.5 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <span className={`text-xs font-mono font-bold uppercase ${sliderInfo.color}`}>
-                      {sliderInfo.label}
-                    </span>
-                    <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                      {sliderInfo.description}
-                    </p>
-                  </div>
-                  {magnitudeValue > 0 && (
-                    <button
-                      onClick={() => setMagnitudeValue(0)}
-                      className="text-[10px] font-mono font-semibold text-primary hover:underline shrink-0"
-                    >
-                      RESET
-                    </button>
-                  )}
                 </div>
               </div>
 
