@@ -203,14 +203,19 @@ const subscribeAlert = async (req, res) => {
     // --- Fire-and-forget: check if current score already qualifies ---
     (async () => {
       try {
+        console.log(`📬 Instant Alert: Checking current score for new subscriber ${email} (threshold: ${score})...`);
         const { data: articles, error: artErr } = await models.getArticles({ limit: 500 });
-        if (artErr || !articles || articles.length === 0) return;
+        if (artErr || !articles || articles.length === 0) {
+          console.log('📬 Instant Alert: No articles available, skipping instant check.');
+          return;
+        }
 
         const summary = await generateExecutiveSummary(articles);
         const currentScore = summary.weightedScore;
+        console.log(`📬 Instant Alert: Current score = ${currentScore}, subscriber threshold = ${score}`);
 
         if (currentScore < score) {
-          console.log(`📬 Instant Alert: Score ${currentScore} is below new subscriber's threshold ${score}. Dispatching to ${email}...`);
+          console.log(`📬 Instant Alert: Score ${currentScore} < threshold ${score}. Dispatching email to ${email}...`);
           await sendAlertEmail({
             toEmail: email,
             score: currentScore,
@@ -219,15 +224,18 @@ const subscribeAlert = async (req, res) => {
           });
 
           // Update trigger timestamp so the 24-hour cooldown starts now
-          if (data && data[0] && data[0].id) {
-            await models.updateSubscriptionTrigger(data[0].id, currentScore);
+          // data is a single object from subscribeEmail, not an array
+          if (data && data.id) {
+            await models.updateSubscriptionTrigger(data.id, currentScore);
+            console.log(`   ✅ Instant alert sent to ${email}, trigger timestamp updated.`);
+          } else {
+            console.log(`   ✅ Instant alert sent to ${email}, but could not update trigger (no subscription ID returned).`);
           }
-          console.log(`   ✅ Instant alert sent to ${email}`);
         } else {
-          console.log(`📬 Instant Alert: Score ${currentScore} is at or above threshold ${score}. No immediate alert needed for ${email}.`);
+          console.log(`📬 Instant Alert: Score ${currentScore} >= threshold ${score}. No immediate alert needed for ${email}.`);
         }
       } catch (instantErr) {
-        console.error(`📬 Instant Alert: Failed for ${email}:`, instantErr.message);
+        console.error(`📬 Instant Alert: Failed for ${email}:`, instantErr.message, instantErr.stack);
       }
     })();
 
