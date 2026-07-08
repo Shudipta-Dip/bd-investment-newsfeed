@@ -125,3 +125,16 @@ export async function subscribeToAlerts(email: string, thresholdScore: number): 
   }
   return json;
 }
+
+/** Unsubscribe from climate score drop email alerts */
+export async function unsubscribeFromAlerts(email: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/alerts/unsubscribe?email=${encodeURIComponent(email)}`, {
+    method: "DELETE",
+  });
+  const json = await res.json();
+  if (!json.success) {
+    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to unsubscribe from alerts";
+    throw new Error(errMsg);
+  }
+  return json;
+}

@@ -30,5 +30,6 @@ router.get('/executive-summary', controllers.getExecutiveSummary);
 // Alert Subscriptions
 // ---------------------------------------------------------------------------
 router.post('/alerts/subscribe', controllers.subscribeAlert);
+router.delete('/alerts/unsubscribe', controllers.unsubscribeAlert);
 
 module.exports = router;

@@ -203,6 +203,32 @@ const subscribeAlert = async (req, res) => {
   }
 };
 
+/**
+ * DELETE /api/alerts/unsubscribe
+ * Unsubscribe an email from alerts.
+ * Expects query param ?email=email
+ */
+const unsubscribeAlert = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+
+    const { data, error } = await models.unsubscribeEmail(email);
+
+    if (error) {
+      return res.status(500).json({ success: false, error });
+    }
+
+    res.json({ success: true, count: data?.length || 0, message: 'You have been successfully unsubscribed from BIDA climate alerts.' });
+  } catch (err) {
+    console.error('Error unsubscribing:', err);
+    res.status(500).json({ success: false, error: 'Failed to process unsubscribe request.' });
+  }
+};
+
 module.exports = {
   healthCheck,
   getNews,
@@ -213,4 +239,5 @@ module.exports = {
   scrapeNews,
   getExecutiveSummary,
   subscribeAlert,
+  unsubscribeAlert,
 };

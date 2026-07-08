@@ -265,6 +265,21 @@ async function updateSubscriptionTrigger(id, score) {
   return { data: data?.[0] || null, error };
 }
 
+/**
+ * Delete all subscriptions matching an email address.
+ */
+async function unsubscribeEmail(email) {
+  if (!supabase) return { data: null, error: 'Database not configured' };
+
+  const { data, error } = await supabase
+    .from(ALERT_TABLE)
+    .delete()
+    .eq('email', email)
+    .select();
+
+  return { data: data || [], error };
+}
+
 module.exports = {
   getArticles,
   getArticleById,
@@ -276,4 +291,5 @@ module.exports = {
   subscribeEmail,
   getActiveSubscriptions,
   updateSubscriptionTrigger,
+  unsubscribeEmail,
 };

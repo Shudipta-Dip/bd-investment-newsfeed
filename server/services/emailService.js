@@ -63,6 +63,9 @@ async function sendAlertEmail({ toEmail, score, narrative, articles }) {
 
   const subject = `[Alert] Bangladesh Investment Climate Score dropped to ${score}/100`;
 
+  const frontendBase = (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'http://localhost:8080');
+  const unsubscribeUrl = `${frontendBase}?unsubscribe=${encodeURIComponent(toEmail)}`;
+
   const htmlContent = `
     <div style="font-family: 'Sora', 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px border #e2e8f0; rounded: 8px; background-color: #ffffff;">
       <div style="background-color: #527F76; padding: 24px; text-align: center; border-radius: 6px 6px 0 0; color: #ffffff;">
@@ -85,8 +88,10 @@ async function sendAlertEmail({ toEmail, score, narrative, articles }) {
           <code style="background-color: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 12px; font-family: monospace;">bd_investment_news_report.csv</code>.
         </p>
       </div>
-      <div style="border-top: 1px solid #e2e8f0; padding: 16px 24px; text-align: center; font-size: 10px; color: #94a3b8; font-family: monospace; text-transform: uppercase; letter-spacing: 0.1em;">
+      <div style="border-top: 1px solid #e2e8f0; padding: 16px 24px; text-align: center; font-size: 10px; color: #94a3b8; font-family: monospace; text-transform: uppercase; letter-spacing: 0.1em; line-height: 1.5;">
         Bangladesh Investment Development Authority (BIDA)
+        <br/><br/>
+        <a href="${unsubscribeUrl}" style="color: #94a3b8; text-decoration: underline;">Unsubscribe from these alerts</a>
       </div>
     </div>
   `;

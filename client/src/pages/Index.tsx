@@ -10,6 +10,9 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { toNewsItem, type NewsItem } from "@/data/news";
 import { InfiniteGridBackground } from "@/components/InfiniteGridBackground";
 import { AlertSubscribe } from "@/components/AlertSubscribe";
+import { useSearchParams } from "react-router-dom";
+import { unsubscribeFromAlerts } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -75,6 +78,40 @@ function getSliderMagnitudeInfo(value: number): {
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const unsubscribeEmail = searchParams.get("unsubscribe");
+  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
+  const { toast } = useToast();
+
+  const handleConfirmUnsubscribe = async () => {
+    if (!unsubscribeEmail) return;
+    setIsUnsubscribing(true);
+    try {
+      await unsubscribeFromAlerts(unsubscribeEmail);
+      toast({
+        title: "Unsubscribed Successfully",
+        description: `You have unsubscribed ${unsubscribeEmail} from all climate alerts.`,
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Unsubscribe Failed",
+        description: err.message || "An error occurred while unsubscribing.",
+      });
+    } finally {
+      setIsUnsubscribing(false);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("unsubscribe");
+      setSearchParams(newParams);
+    }
+  };
+
+  const handleCancelUnsubscribe = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("unsubscribe");
+    setSearchParams(newParams);
+  };
+
   const debouncedSearch = useDebounce(searchQuery, 500);
 
   // Multi-select state: empty Set = show all
@@ -192,6 +229,41 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground relative">
       <InfiniteGridBackground />
       <div className="relative z-10">
+        {/* Unsubscribe Confirmation Dialog */}
+        <Dialog open={!!unsubscribeEmail} onOpenChange={(open) => { if (!open) handleCancelUnsubscribe(); }}>
+          <DialogContent className="sm:max-w-md bg-card border border-border">
+            <DialogHeader>
+              <DialogTitle className="text-sm font-bold uppercase tracking-widest text-destructive">
+                Unsubscribe from Alerts
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground pt-1.5 leading-relaxed">
+                Are you sure you want to unsubscribe <strong className="text-foreground">{unsubscribeEmail}</strong> from all BIDA climate alert notifications?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isUnsubscribing}
+                onClick={handleCancelUnsubscribe}
+                className="text-xs font-semibold"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={isUnsubscribing}
+                onClick={handleConfirmUnsubscribe}
+                className="text-xs font-semibold gap-1.5"
+              >
+                {isUnsubscribing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Confirm Unsubscribe
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {topRisk && (
           <CriticalAlertBanner item={topRisk} onView={() => window.open(topRisk.url, "_blank")} />
         )}
