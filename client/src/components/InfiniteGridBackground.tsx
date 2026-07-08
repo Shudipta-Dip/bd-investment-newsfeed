@@ -70,7 +70,7 @@ export const InfiniteGridBackground = () => {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-background"
+      className="fixed inset-0 w-screen h-screen overflow-hidden pointer-events-none z-0 bg-background"
     >
       {/* Layer 1: Subtle background grid (always visible) */}
       <div className="absolute inset-0 opacity-[0.05]">
@@ -87,9 +87,12 @@ export const InfiniteGridBackground = () => {
 
       {/* Decorative Blur Spheres */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute right-[-20%] top-[-20%] w-[40%] h-[40%] rounded-full bg-orange-500/30 dark:bg-orange-600/10 blur-[120px]" />
-        <div className="absolute right-[10%] top-[-10%] w-[20%] h-[20%] rounded-full bg-primary/25 blur-[100px]" />
-        <div className="absolute left-[-10%] bottom-[-20%] w-[40%] h-[40%] rounded-full bg-blue-500/30 dark:bg-blue-600/10 blur-[120px]" />
+        {/* Top-right orange/primary glow: highly dimmed in dark mode */}
+        <div className="absolute right-[-20%] top-[-20%] w-[40%] h-[40%] rounded-full bg-orange-500/25 dark:bg-orange-600/5 blur-[120px]" />
+        <div className="absolute right-[10%] top-[-10%] w-[20%] h-[20%] rounded-full bg-primary/20 dark:bg-primary/5 blur-[100px]" />
+        
+        {/* Bottom-left blue glow: matching intensity */}
+        <div className="absolute left-[-15%] bottom-[-15%] w-[40%] h-[40%] rounded-full bg-blue-500/25 dark:bg-blue-600/10 blur-[120px]" />
       </div>
     </div>
   );
