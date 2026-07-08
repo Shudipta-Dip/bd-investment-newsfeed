@@ -17,6 +17,7 @@
 7. [Reconstructed Vibecoding Timeline](#7-reconstructed-vibecoding-timeline)
 8. [Key Design Decisions & Trade-offs](#8-key-design-decisions--trade-offs)
 9. [Instructor Q&A Prep](#9-instructor-qa-prep)
+10. [Conditional Email Alert System](#10-conditional-email-alert-system)
 
 ---
 
@@ -132,15 +133,18 @@ It operates as a **24/7 automated intelligence pipeline** that:
 | [server.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/server.js) | HTTP entry point. Loads `.env`, starts Express on port 5002. |
 | [app.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/app.js) | Express app. Mounts routes, registers two cron jobs (3-hour scrape, midnight purge). Configures restricted CORS origin whitelist via `FRONTEND_URL`. |
 | [config/database.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/config/database.js) | Supabase client. Validates credentials, gracefully warns if unconfigured. |
-| [routes/index.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/routes/index.js) | REST API routes: `GET /api/news`, `GET /api/stats`, `GET /api/executive-summary`, etc. (`POST /api/scrape` disabled for security). |
-| [controllers/index.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/controllers/index.js) | Route handlers. Bridges HTTP requests to models/services. PATCH endpoint applies a whitelist (`action_taken`, `action_note`) to prevent arbitrary field injection. |
-| [models/index.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/models/index.js) | Supabase data access. Queries, upserts, filtering, stats, and 60-day purge. Search queries use an `OR` filter across both `title` and `snippet` fields. |
-| [services/scraper.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/scraper.js) | Orchestrator. Drives the full pipeline: RSS → filter → AI gauntlet → dedup → save. Includes `cleanUrl()` for tracking-parameter stripping and `parseSafeDate()` for crash-proof date handling. |
+| [config/001_create_alert_subscriptions.sql](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/config/001_create_alert_subscriptions.sql) | SQL schema file creating the `alert_subscriptions` table in Supabase. |
+| [routes/index.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/routes/index.js) | REST API routes: `GET /api/news`, `POST /api/alerts/subscribe`, `DELETE /api/alerts/unsubscribe`, etc. |
+| [controllers/index.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/controllers/index.js) | Route handlers. Bridges HTTP requests to models/services. Handles email registration and deletion requests. |
+| [models/index.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/models/index.js) | Supabase data access. Includes `subscribeEmail()`, `getActiveSubscriptions()`, `updateSubscriptionTrigger()`, and `unsubscribeEmail()`. |
+| [services/scraper.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/scraper.js) | Orchestrator. Drives the full pipeline: RSS → filter → AI gauntlet → dedup → save. |
 | [services/analyzer.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/analyzer.js) | Keyword-based relevance filter + rule-based sentiment tagger + impact scorer. |
-| [services/aiValidator.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/aiValidator.js) | **The AI brain.** Contains all LLM interactions: batch validation, deep-dive, local rationale, executive summary. Includes `parseJsonArraySafe()` for resilient LLM output parsing, `retryWithBackoff()` for rate-limit handling, and content-based in-memory caching for the executive summary. |
+| [services/aiValidator.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/aiValidator.js) | **The AI brain.** Contains all LLM interactions: batch validation, deep-dive, local rationale, executive summary. |
 | [services/articleExtractor.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/articleExtractor.js) | Full-text extraction for deep-dive. Uses Mozilla Readability (Reader View engine) with Cheerio fallback. |
-| [services/htmlScraper.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/htmlScraper.js) | HTML scraping fallback for sources without RSS feeds. Extracts headlines from raw HTML using 3 strategies. |
+| [services/htmlScraper.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/htmlScraper.js) | HTML scraping fallback for sources without RSS feeds. Extracts headlines from raw HTML. |
 | [services/sources.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/sources.js) | Auto-generated array of 300+ active RSS source objects `{name, url, region}`. |
+| [services/emailService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/emailService.js) | Nodemailer SMTP mail transporter service. Compiles article data into CSV string attachments and wraps templates with an unsubscribe link. |
+| [services/alertDispatcher.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/alertDispatcher.js) | Post-scrape orchestrator job. Reads subscribers, enforces the 24-hour rate limit/cooldown, and sends alerts if conditions are met. |
 
 #### Client ([client/src/](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src))
 
@@ -149,13 +153,14 @@ It operates as a **24/7 automated intelligence pipeline** that:
 | [main.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/main.tsx) | React entry point. |
 | [App.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/App.tsx) | Root component. Wraps everything in ThemeProvider, QueryClientProvider, Router. |
 | [pages/Index.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/pages/Index.tsx) | Main dashboard page. Orchestrates all components, filter state, search, CSV export. |
-| [lib/api.ts](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/lib/api.ts) | API service layer. Typed functions for `fetchNews`, `fetchStats`, `fetchExecutiveSummary`, `updateArticle`. |
+| [lib/api.ts](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/lib/api.ts) | API service layer. Typed functions for `fetchNews`, `fetchStats`, `fetchExecutiveSummary`, `updateArticle`, `subscribeToAlerts`, and `unsubscribeFromAlerts`. |
 | [data/news.ts](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/data/news.ts) | TypeScript types + `toNewsItem()` mapper (API shape → component shape). |
 | [hooks/use-news.ts](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/hooks/use-news.ts) | React Query hooks: `useNews`, `useStats`, `useExecutiveSummary`. Auto-refetch every 2–5 minutes. |
 | [components/SummaryStats.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/SummaryStats.tsx) | AI Climate Pulse card + 3 stat cards (opportunities, risks, total). |
 | [components/NewsCard.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/NewsCard.tsx) | Individual article card with sentiment badge, AI rationale, impact bar, time ago. |
 | [components/ActionDrawer.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/ActionDrawer.tsx) | Side panel for logging agency responses (Draft Response, Mark Handled, Share Signal, Archive). |
 | [components/CriticalAlertBanner.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/CriticalAlertBanner.tsx) | Top-of-page red banner for the highest-impact risk article. |
+| [components/AlertSubscribe.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/AlertSubscribe.tsx) | Modal form widget containing client-side validation, threshold sliders, and submission handlers. |
 
 ---
 
@@ -991,6 +996,48 @@ The keyword pre-filter is the key cost enabler — it eliminates ~90% of article
 
 ---
 
+## 10. Conditional Email Alert System
+
+To keep stakeholders automatically informed of critical shifts in investment sentiment without requiring them to actively poll the dashboard, the system features a self-managing **Conditional Email Alert System**.
+
+### Overview
+Users can subscribe by inputting their email address and defining a custom threshold score. When a scraping run finishes and calculates the updated AI climate index score:
+1. The system checks if the new score falls strictly below the subscriber's threshold.
+2. If it does, and the user hasn't received an alert in the last **24 hours (cooldown period)**, the system dispatches a notification.
+3. The notification email includes:
+   - A subject line containing the new climate score.
+   - An HTML body displaying the latest AI Executive Summary narrative.
+   - A dynamically compiled **CSV attachment** containing all active articles from the last 7 days that contributed to the score.
+
+### Database Schema
+A new table, `alert_subscriptions`, is registered in Supabase:
+```sql
+CREATE TABLE alert_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  threshold_score INTEGER NOT NULL CHECK (threshold_score >= 0 AND threshold_score <= 100),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_triggered_at TIMESTAMPTZ,
+  last_triggered_score INTEGER,
+  CONSTRAINT unique_email_threshold UNIQUE (email, threshold_score)
+);
+```
+
+### Key Files & Roles
+*   **[app.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/app.js):** Invokes the alert check-and-dispatch process immediately following the completion of the 3-hour automated scraping job.
+*   **[alertDispatcher.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/alertDispatcher.js):** The dispatcher orchestrator. Checks active subscriptions, verifies the 24-hour rate limit, and triggers email dispatches.
+*   **[emailService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/emailService.js):** Builds the Nodemailer transporter, generates the custom HTML template with the BIDA color theme, compiles the memory-buffered articles CSV attachment, and appends the dynamic unsubscribe footer link.
+*   **[AlertSubscribe.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/AlertSubscribe.tsx):** A responsive form widget with client-side email format regex checks and a custom slider that resolves scores to category labels (Routine, Notable, Sectoral, Systemic).
+*   **[Index.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/pages/Index.tsx):** Displays a popup Dialog modal for the subscription form, triggered by a new "Set Email Alert" button. It also checks for the `?unsubscribe` query parameter to launch the direct unsubscribe confirmation modal.
+
+### The Unsubscribe Cycle (Option C)
+To prevent friction and ensure compliance, the unsubscribe flow operates without requiring separate logins:
+1. Every alert email footer contains a link dynamically built from the backend: `https://[your-app].vercel.app/?unsubscribe=[user-email]`.
+2. When the user clicks the link, the React client detects the query parameter on load and automatically opens a confirmation Dialog.
+3. Confirming the dialog calls `DELETE /api/alerts/unsubscribe?email=[user-email]`, removing all records matching their email from the database, and cleanses the URL parameter.
+
+---
+
 ## Changelog
 
 > This section will be updated as we polish the project.
@@ -1012,3 +1059,10 @@ The keyword pre-filter is the key cost enabler — it eliminates ~90% of article
 | 2026-07-08 | Restricted CORS policy using whitelisted origins via the `FRONTEND_URL` environment variable, preventing unauthorized websites from executing API requests. | Changelog, 2, 8 |
 | 2026-07-08 | Added a robust `escapeCSV` helper in the frontend (`Index.tsx`) to sanitize double quotes and commas in exported reports, preventing data alignment corruption. | Changelog, 6 |
 | 2026-07-08 | Updated CSV export feature in frontend (`Index.tsx`) to dynamically append active dashboard filters (sentiment, region, magnitude, search query) to the downloaded filename. | Changelog, 6 |
+| 2026-07-08 | Added SQL schema file (`001_create_alert_subscriptions.sql`) creating `alert_subscriptions` table in Supabase. | Changelog, 2, 10 |
+| 2026-07-08 | Built SMTP transporter, CSV dynamic compiler, and Nodemailer email dispatch logic (`emailService.js`). | Changelog, 2, 10 |
+| 2026-07-08 | Created the post-scrape conditional alert evaluation job (`alertDispatcher.js`) with 24-hour rate limit/cooldown enforcement. | Changelog, 2, 10 |
+| 2026-07-08 | Implemented frontend `AlertSubscribe.tsx` form card and integrated it beside filters on dashboard page. | Changelog, 2, 6 |
+| 2026-07-08 | Added backend `POST /api/alerts/subscribe` and `DELETE /api/alerts/unsubscribe` handlers to register and remove alert subscriptions. | Changelog, 2, 10 |
+| 2026-07-08 | Updated Express CORS configuration (`app.js`) to dynamically authorize all `*.vercel.app` requests, resolving browser-level CORS blocks. | Changelog, 2, 8 |
+| 2026-07-08 | Relocated alert subscription widget to Dialog modal, added header "Set Email Alert" button, and implemented full Option C direct unsubscribe handler. | Changelog, 6, 10 |
