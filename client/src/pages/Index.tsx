@@ -4,12 +4,20 @@ import { CriticalAlertBanner } from "@/components/CriticalAlertBanner";
 import { SummaryStats } from "@/components/SummaryStats";
 import { NewsCard } from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, Globe, MapPin } from "lucide-react";
+import { Download, Loader2, Globe, MapPin, Bell, BellRing } from "lucide-react";
 import { useNews } from "@/hooks/use-news";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toNewsItem, type NewsItem } from "@/data/news";
 import { InfiniteGridBackground } from "@/components/InfiniteGridBackground";
 import { AlertSubscribe } from "@/components/AlertSubscribe";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 // Database sentiment values
 type ApiSentiment = "opportunity" | "risk" | "regulation";
@@ -66,6 +74,7 @@ function getSliderMagnitudeInfo(value: number): {
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 500);
 
   // Multi-select state: empty Set = show all
@@ -212,6 +221,29 @@ const Index = () => {
               </p>
             </div>
             <div className="flex gap-2">
+              <Dialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="font-semibold gap-1.5 border-primary/20 hover:border-primary/40 hover:bg-primary/5">
+                    <Bell className="w-4 h-4 text-primary" strokeWidth={2} />
+                    Set Email Alert
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md bg-card border border-border">
+                  <DialogHeader className="border-b pb-3 border-border">
+                    <DialogTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                      <BellRing className="w-4 h-4 text-primary animate-pulse" />
+                      BIDA Center Alerts
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground pt-1.5 leading-relaxed">
+                      Receive email briefs and full CSV reports automatically when the index drops below your selected threshold.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="pt-4">
+                    <AlertSubscribe onSuccess={() => setIsAlertOpen(false)} />
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Button size="sm" className="font-semibold" onClick={exportToCSV}>
                 <Download className="w-4 h-4 mr-2" strokeWidth={2} />
                 Export Report
@@ -219,94 +251,88 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Filters & Alerts Panel Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2 bg-card border border-border shadow-card rounded-xl p-6">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">
-                Filter Intelligence Feed
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                {/* Sentiment Filter */}
-                <div className="space-y-3">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                    Sentiment
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {sentimentFilters.map((f) => {
-                      const isActive = selectedSentiments.has(f.key);
-                      return (
-                        <button
-                          key={f.key}
-                          onClick={() => toggleSentiment(f.key)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition ${
-                            isActive
-                              ? f.color + " border-current shadow-sm"
-                              : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-muted"
-                          }`}
-                        >
-                          {f.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+          {/* Filter Panel */}
+          <div className="bg-card border border-border shadow-card rounded-xl p-6 mb-8">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">
+              Filter Intelligence Feed
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Sentiment Filter */}
+              <div className="space-y-3">
+                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  Sentiment
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {sentimentFilters.map((f) => {
+                    const isActive = selectedSentiments.has(f.key);
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => toggleSentiment(f.key)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition ${
+                          isActive
+                            ? f.color + " border-current shadow-sm"
+                            : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-muted"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {/* Source Region Filter */}
-                <div className="space-y-3">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                    Source Region
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {regionFilters.map((f) => {
-                      const isActive = selectedRegions.has(f.key);
-                      const Icon = f.icon;
-                      return (
-                        <button
-                          key={f.key}
-                          onClick={() => toggleRegion(f.key)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition inline-flex items-center gap-1.5 ${
-                            isActive
-                              ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                              : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-muted"
-                          }`}
-                        >
-                          <Icon className="w-3 h-3" strokeWidth={2} />
-                          {f.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Magnitude Slider Filter */}
-                <div className="space-y-3">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
-                    Impact Magnitude
-                  </span>
-                  <div className="relative h-8 flex flex-col justify-between">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={magnitudeValue}
-                      onChange={(e) => setMagnitudeValue(Number(e.target.value))}
-                      className="w-full h-1.5 mt-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary border border-border"
-                    />
-                    <div
-                      className="absolute bottom-0 transform -translate-x-1/2 bg-primary/10 text-primary border border-primary/20 shadow-sm rounded px-2 py-0.5 text-[10px] font-mono font-bold whitespace-nowrap pointer-events-none"
-                      style={{ left: `${magnitudeValue}%` }}
-                    >
-                      {magnitudeValue}({sliderInfo.label})
-                    </div>
-                  </div>
-                </div>
-
               </div>
-            </div>
-            
-            <div className="lg:col-span-1">
-              <AlertSubscribe />
+
+              {/* Source Region Filter */}
+              <div className="space-y-3">
+                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  Source Region
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {regionFilters.map((f) => {
+                    const isActive = selectedRegions.has(f.key);
+                    const Icon = f.icon;
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => toggleRegion(f.key)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider border transition inline-flex items-center gap-1.5 ${
+                          isActive
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-background text-muted-foreground border-transparent hover:border-primary/40 hover:bg-muted"
+                        }`}
+                      >
+                        <Icon className="w-3 h-3" strokeWidth={2} />
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Magnitude Slider Filter */}
+              <div className="space-y-3">
+                <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                  Impact Magnitude
+                </span>
+                <div className="relative h-8 flex flex-col justify-between">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={magnitudeValue}
+                    onChange={(e) => setMagnitudeValue(Number(e.target.value))}
+                    className="w-full h-1.5 mt-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary border border-border"
+                  />
+                  <div
+                    className="absolute bottom-0 transform -translate-x-1/2 bg-primary/10 text-primary border border-primary/20 shadow-sm rounded px-2 py-0.5 text-[10px] font-mono font-bold whitespace-nowrap pointer-events-none"
+                    style={{ left: `${magnitudeValue}%` }}
+                  >
+                    {magnitudeValue}({sliderInfo.label})
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
