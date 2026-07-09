@@ -356,13 +356,10 @@ const Index = () => {
                             <strong className="text-emerald-400">Opportunity:</strong> Positive signals like FDI growth, policy incentives, or infrastructure expansions.
                           </div>
                           <div>
-                            <strong className="text-slate-400">Neutral:</strong> Informational announcements or routine reports with no immediate economic impact.
-                          </div>
-                          <div>
                             <strong className="text-blue-400">Regulation:</strong> Shifts in tariffs, trade policy, compliance, or tax rules.
                           </div>
                           <div>
-                            <strong className="text-red-400">Risk / Critical:</strong> Concerns like political disruption, high inflation, energy crises, or delays.
+                            <strong className="text-red-400">Risk:</strong> Concerns like political disruption, high inflation, energy crises, or project delays.
                           </div>
                         </div>
                       </TooltipContent>

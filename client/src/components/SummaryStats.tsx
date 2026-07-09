@@ -1,5 +1,11 @@
-import { TrendingUp, AlertTriangle, Globe, Activity, Loader2, Brain } from "lucide-react";
+import { TrendingUp, AlertTriangle, Globe, Activity, Loader2, Brain, HelpCircle } from "lucide-react";
 import { useStats, useExecutiveSummary } from "@/hooks/use-news";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /** Map weighted score to a qualitative label */
 function confidenceLabel(score: number): { text: string; color: string } {
@@ -71,8 +77,41 @@ export const SummaryStats = () => {
               <span className={`text-3xl font-bold ${labelColor}`}>
                 {labelText}
               </span>
-              <span className="text-sm font-mono text-muted-foreground">
+              <span className="text-sm font-mono text-muted-foreground flex items-center gap-1.5">
                 {scoreText}/100
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="text-muted-foreground hover:text-foreground transition-colors cursor-help outline-none">
+                        <HelpCircle className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs p-3 bg-card border border-border text-foreground rounded-lg shadow-lg" side="right" align="center">
+                      <div className="space-y-2 text-xs leading-relaxed">
+                        <p className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground border-b pb-1">Scoring Methodology</p>
+                        <p>
+                          The score represents the health of the investment climate (0 = high threat, 100 = bullish growth).
+                        </p>
+                        <div>
+                          <strong>1. Sentiment Weight:</strong> Opportunity updates increase the score, Risk updates decrease the score, and Regulation policy reports act neutral/partial.
+                        </div>
+                        <div>
+                          <strong>2. Global Weighting:</strong> International coverage is weighted at <strong>70%</strong> and local coverage at <strong>30%</strong> because global narrative is a primary driver of foreign direct investment.
+                        </div>
+                        <div>
+                          <strong>3. Classification Bounds:</strong>
+                          <ul className="list-disc list-inside mt-1 pl-1 space-y-0.5">
+                            <li><span className="text-emerald-500 font-bold">Bullish:</span> &ge; 70</li>
+                            <li><span className="text-emerald-400 font-bold">Cautiously Positive:</span> 55–69</li>
+                            <li><span className="text-yellow-500 font-bold">Mixed:</span> 45–54</li>
+                            <li><span className="text-orange-400 font-bold">Cautious:</span> 30–44</li>
+                            <li><span className="text-red-500 font-bold">Bearish:</span> &lt; 30</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </span>
             </div>
 
