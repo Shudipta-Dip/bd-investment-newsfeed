@@ -1,17 +1,14 @@
-const sgMail = require('@sendgrid/mail');
+const MAKE_WEBHOOK_URL = process.env.MAKE_WEBHOOK_URL;
+const MAKE_WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET || 'bd-newsfeed-secret-123';
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const ALERT_FROM_EMAIL = process.env.ALERT_FROM_EMAIL;
-
-const isMailConfigured = !!(SENDGRID_API_KEY && ALERT_FROM_EMAIL);
+const isMailConfigured = !!MAKE_WEBHOOK_URL;
 
 if (isMailConfigured) {
-  console.log(`✉️  SendGrid Email API configured. From: ${ALERT_FROM_EMAIL}`);
-  sgMail.setApiKey(SENDGRID_API_KEY);
+  console.log(`✉️  Make.com Webhook Email service configured.`);
 } else {
   console.warn(
     '⚠️  Email Service is not configured. Email dispatches will be mocked and printed to the terminal console.\n' +
-    '   To enable actual email alerts, set SENDGRID_API_KEY and ALERT_FROM_EMAIL in your environment variables.'
+    '   To enable actual email alerts, set MAKE_WEBHOOK_URL in your environment variables.'
   );
 }
 
@@ -43,7 +40,7 @@ function generateArticlesCSV(articles) {
 }
 
 /**
- * Dispatch alert email to a subscriber.
+ * Dispatch alert email to a subscriber via Make.com Webhook.
  */
 async function sendAlertEmail({ toEmail, score, narrative, articles }) {
   const csvContent = generateArticlesCSV(articles);
@@ -94,33 +91,32 @@ async function sendAlertEmail({ toEmail, score, narrative, articles }) {
   }
 
   try {
-    const msg = {
-      to: toEmail,
-      from: ALERT_FROM_EMAIL,
-      subject: subject,
-      html: htmlContent,
-      attachments: [
-        {
-          filename: 'bd_investment_news_report.csv',
-          content: Buffer.from(csvContent, 'utf-8').toString('base64'),
-          type: 'text/csv',
-          disposition: 'attachment',
-        },
-      ],
+    const payload = {
+      toEmail,
+      subject,
+      htmlContent,
+      csvContent,
+      csvFilename: 'bd_investment_news_report.csv',
+      secretToken: MAKE_WEBHOOK_SECRET
     };
 
-    const response = await sgMail.send(msg);
-    // SendGrid's response structure usually has headers in index 0
-    const messageId = response[0]?.headers?.['x-message-id'] || 'sent';
+    const response = await fetch(MAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
 
-    console.log(`✅ Alert email sent to ${toEmail}: messageId=${messageId}`);
-    return { success: true, messageId };
-  } catch (error) {
-    console.error(`❌ Failed to send alert email to ${toEmail}:`, error);
-    // If SendGrid has a detailed response error, print it
-    if (error.response && error.response.body) {
-      console.error('SendGrid Error Response:', JSON.stringify(error.response.body));
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Make.com Webhook responded with status ${response.status}: ${errorText}`);
     }
+
+    console.log(`✅ Alert email payload successfully sent to Make.com Webhook for ${toEmail}`);
+    return { success: true };
+  } catch (error) {
+    console.error(`❌ Failed to dispatch webhook to Make.com for ${toEmail}:`, error);
     throw error;
   }
 }
