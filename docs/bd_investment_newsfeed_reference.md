@@ -143,7 +143,7 @@ It operates as a **24/7 automated intelligence pipeline** that:
 | [services/articleExtractor.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/articleExtractor.js) | Full-text extraction for deep-dive. Uses Mozilla Readability (Reader View engine) with Cheerio fallback. |
 | [services/htmlScraper.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/htmlScraper.js) | HTML scraping fallback for sources without RSS feeds. Extracts headlines from raw HTML. |
 | [services/sources.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/sources.js) | Auto-generated array of 300+ active RSS source objects `{name, url, region}`. |
-| [services/emailService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/emailService.js) | Nodemailer SMTP mail transporter service. Compiles article data into CSV string attachments and wraps templates with an unsubscribe link. |
+| [services/emailService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/emailService.js) | Webhook dispatcher service. Compiles article data into CSV string text and triggers an HTTPS POST request to an external webhook (e.g. n8n or Make.com) to bypass SMTP port blocks. |
 | [services/alertDispatcher.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/alertDispatcher.js) | Post-scrape orchestrator job. Reads subscribers, enforces the 24-hour rate limit/cooldown, and sends alerts if conditions are met. |
 
 #### Client ([client/src/](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src))
@@ -198,10 +198,11 @@ This is the most technically interesting part of the project and the section mos
          ▼
 ~30-80 fully enriched articles → Supabase
          │
-    Phase 5: Executive Climate Summary (Gemini Flash)
+    Phase 5: Executive Climate Summary (Gemini Flash / Groq)
          │  ─── On-demand (when dashboard loads)
          │  ─── Weighted confidence score (70% global, 30% local)
          │  ─── 2-sentence executive brief
+         │  ─── Fallback: Groq (Llama-3.3-70b) if Gemini hits 429 quota block
          ▼
 Dashboard with real-time intelligence
 ```
@@ -969,7 +970,8 @@ The keyword pre-filter is the key cost enabler — it eliminates ~90% of article
 
 ### "What happens if Groq or Gemini is completely down?"
 
-**Answer:** Graceful degradation. If Groq is unavailable, `getRotatedGroq()` returns `null`, and the `validateBatch()` function skips AI validation — articles still get saved with their keyword-based sentiment and impact scores. If Gemini is unavailable, deep-dive intelligence notes won't be generated, but articles are still saved. The executive summary endpoint returns a fallback message: "Climate assessment temporarily unavailable."
+**Answer:** Graceful degradation. If Groq is unavailable, `getRotatedGroq()` returns `null`, and the `validateBatch()` function skips AI validation — articles still get saved with their keyword-based sentiment and impact scores. If Gemini is unavailable or hits its 429 quota block, the executive summary generator will automatically fall back to Groq (`llama-3.3-70b-versatile` model) to synthesize the brief. If both fail, it safely returns the fallback message: "Climate assessment temporarily unavailable."
+
 
 ### "How does the full-text extraction work?"
 
