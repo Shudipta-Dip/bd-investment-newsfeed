@@ -1,14 +1,14 @@
-const MAKE_WEBHOOK_URL = process.env.MAKE_WEBHOOK_URL;
-const MAKE_WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET || 'bd-newsfeed-secret-123';
+const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL;
+const ALERT_WEBHOOK_SECRET = process.env.ALERT_WEBHOOK_SECRET || 'bd-newsfeed-secret-123';
 
-const isMailConfigured = !!MAKE_WEBHOOK_URL;
+const isMailConfigured = !!ALERT_WEBHOOK_URL;
 
 if (isMailConfigured) {
-  console.log(`✉️  Make.com Webhook Email service configured.`);
+  console.log(`✉️  Generic Webhook Email service configured.`);
 } else {
   console.warn(
     '⚠️  Email Service is not configured. Email dispatches will be mocked and printed to the terminal console.\n' +
-    '   To enable actual email alerts, set MAKE_WEBHOOK_URL in your environment variables.'
+    '   To enable actual email alerts, set ALERT_WEBHOOK_URL in your environment variables.'
   );
 }
 
@@ -97,10 +97,10 @@ async function sendAlertEmail({ toEmail, score, narrative, articles }) {
       htmlContent,
       csvContent,
       csvFilename: 'bd_investment_news_report.csv',
-      secretToken: MAKE_WEBHOOK_SECRET
+      secretToken: ALERT_WEBHOOK_SECRET
     };
 
-    const response = await fetch(MAKE_WEBHOOK_URL, {
+    const response = await fetch(ALERT_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -110,13 +110,13 @@ async function sendAlertEmail({ toEmail, score, narrative, articles }) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Make.com Webhook responded with status ${response.status}: ${errorText}`);
+      throw new Error(`Webhook responded with status ${response.status}: ${errorText}`);
     }
 
-    console.log(`✅ Alert email payload successfully sent to Make.com Webhook for ${toEmail}`);
+    console.log(`✅ Alert email payload successfully sent to Webhook for ${toEmail}`);
     return { success: true };
   } catch (error) {
-    console.error(`❌ Failed to dispatch webhook to Make.com for ${toEmail}:`, error);
+    console.error(`❌ Failed to dispatch webhook for ${toEmail}:`, error);
     throw error;
   }
 }
