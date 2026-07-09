@@ -139,7 +139,7 @@ function getRotatedModel(purpose = 'validation') {
   currentKeyIndex++;
 
   const genAI = new GoogleGenerativeAI(keys[keyIdx]);
-  return genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  return genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' });
 }
 
 // ============================================================================
