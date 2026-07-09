@@ -1003,7 +1003,7 @@ To keep stakeholders automatically informed of critical shifts in investment sen
 ### Overview
 Users can subscribe by inputting their email address and defining a custom threshold score. When a scraping run finishes and calculates the updated AI climate index score:
 1. The system checks if the new score falls strictly below the subscriber's threshold.
-2. If it does, and the user hasn't received an alert in the last **24 hours (cooldown period)**, the system dispatches a notification.
+2. If it does, and the user hasn't received an alert in the last **24 hours (cooldown period)**, the system dispatches a notification payload.
 3. The notification email includes:
    - A subject line containing the new climate score.
    - An HTML body displaying the latest AI Executive Summary narrative.
@@ -1023,10 +1023,25 @@ CREATE TABLE alert_subscriptions (
 );
 ```
 
+### Production Architecture (Generic Webhook + n8n + Gmail API)
+To navigate hosting restrictions, the email alerts are dispatched through an external automation flow over standard HTTPS (Port 443):
+
+```
+┌──────────────────────────┐      JSON payload      ┌─────────────┐      Gmail API      ┌─────────────┐
+│  Express Backend         ├───────────────────────►│  n8n Cloud  ├────────────────────►│ Subscriber  │
+│  (emailService.js fetch) │  (toEmail, subject,   │  Webhook    │  (HTML email with   │ Inbox       │
+└──────────────────────────┘   html, csvContent)    └─────────────┘   CSV attachment)   └─────────────┘
+```
+
+1. **Trigger:** The Express backend generates the alert HTML and raw CSV text, and makes a `POST` request to `ALERT_WEBHOOK_URL` containing a secure `secretToken`.
+2. **n8n Webhook Node:** Receives the payload securely.
+3. **n8n Code Node:** Executes a JavaScript script to convert the raw `csvContent` string into a base64-encoded binary buffer inside the workflow.
+4. **n8n Gmail Node:** Connects via Google OAuth2 to compose and dispatch the email using a personal Gmail account, attaching the binary file automatically.
+
 ### Key Files & Roles
 *   **[app.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/app.js):** Invokes the alert check-and-dispatch process immediately following the completion of the 3-hour automated scraping job.
 *   **[alertDispatcher.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/alertDispatcher.js):** The dispatcher orchestrator. Checks active subscriptions, verifies the 24-hour rate limit, and triggers email dispatches.
-*   **[emailService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/emailService.js):** Builds the Nodemailer transporter, generates the custom HTML template with the BIDA color theme, compiles the memory-buffered articles CSV attachment, and appends the dynamic unsubscribe footer link.
+*   **[emailService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/emailService.js):** Generates the custom HTML template with the BIDA color theme, compiles the memory-buffered articles CSV text, and performs a native `fetch()` POST request to the external webhook handler.
 *   **[AlertSubscribe.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/AlertSubscribe.tsx):** A responsive form widget with client-side email format regex checks and a custom slider that resolves scores to category labels (Routine, Notable, Sectoral, Systemic).
 *   **[Index.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/pages/Index.tsx):** Displays a popup Dialog modal for the subscription form, triggered by a new "Set Email Alert" button. It also checks for the `?unsubscribe` query parameter to launch the direct unsubscribe confirmation modal.
 
@@ -1035,6 +1050,20 @@ To prevent friction and ensure compliance, the unsubscribe flow operates without
 1. Every alert email footer contains a link dynamically built from the backend: `https://[your-app].vercel.app/?unsubscribe=[user-email]`.
 2. When the user clicks the link, the React client detects the query parameter on load and automatically opens a confirmation Dialog.
 3. Confirming the dialog calls `DELETE /api/alerts/unsubscribe?email=[user-email]`, removing all records matching their email from the database, and cleanses the URL parameter.
+
+### History of Alternative Architectures & Failures
+
+During development, multiple email sending strategies were attempted and abandoned due to specific platform and security limitations:
+
+1. **Nodemailer SMTP (Direct Connect)**
+   * *Implementation:* Configured standard SMTP connection to `smtp.gmail.com:587` using standard login credentials.
+   * *Failure Mode:* Render blocks all outbound SMTP ports (25, 465, 587) on its Free Tier to prevent email spam abuse. All connection attempts threw an `ETIMEDOUT` error.
+2. **Resend HTTP API**
+   * *Implementation:* Swapped Nodemailer for Resend's official Node.js SDK, making requests over HTTPS (Port 443).
+   * *Failure Mode:* Because the frontend was hosted on Vercel's free tier domain (`*.vercel.app`), Resend rejected the domain registration (it restricts shared/public domains to prevent reputation abuse). Sending to external subscribers on the free plan is locked until a private custom domain is verified.
+3. **SendGrid Single Sender Verification (SSV)**
+   * *Implementation:* Swapped Resend for SendGrid and verified a personal Gmail address via Single Sender Authentication to send to arbitrary subscribers without a custom domain.
+   * *Failure Mode:* SendGrid's strict signup systems block two-factor SMS verification delivery to standard Bangladeshi phone carriers, preventing registration access.
 
 ---
 
@@ -1066,3 +1095,6 @@ To prevent friction and ensure compliance, the unsubscribe flow operates without
 | 2026-07-08 | Added backend `POST /api/alerts/subscribe` and `DELETE /api/alerts/unsubscribe` handlers to register and remove alert subscriptions. | Changelog, 2, 10 |
 | 2026-07-08 | Updated Express CORS configuration (`app.js`) to dynamically authorize all `*.vercel.app` requests, resolving browser-level CORS blocks. | Changelog, 2, 8 |
 | 2026-07-08 | Relocated alert subscription widget to Dialog modal, added header "Set Email Alert" button, and implemented full Option C direct unsubscribe handler. | Changelog, 6, 10 |
+| 2026-07-09 | Swapped SMTP-based email dispatch with a generic HTTP Webhook trigger (`ALERT_WEBHOOK_URL`) to bypass Render SMTP port locks. | Changelog, 10 |
+| 2026-07-09 | Added a robust Groq-based fallback for generating executive summaries if Google Gemini API key quota limits (429) are exceeded. | Changelog, 3, 9 |
+
