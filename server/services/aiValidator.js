@@ -486,22 +486,45 @@ CRITICAL INSTRUCTIONS:
 - Output ONLY the 2 sentences.
 - Do NOT mention any internal scoring formulas, weight splits (e.g., 70% or 30%), or system indicators. Focus purely on describing the economic and investment landscape itself.`;
 
+  let narrative = '';
   try {
     const result = await retryWithBackoff(() => model.generateContent(prompt));
-    const narrative = result.response.text().trim();
-    const summaryData = { narrative, weightedScore };
-    
-    // Only cache valid narratives (not the fallback error message)
-    if (narrative && narrative !== 'Climate assessment temporarily unavailable.') {
-      summaryCache = { fingerprint, data: summaryData };
-    }
-    
-    return summaryData;
+    narrative = result.response.text().trim();
   } catch (error) {
-    console.error('Executive summary error:', error.message);
-    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    return { narrative: 'Climate assessment temporarily unavailable.', weightedScore };
+    console.warn('⚠️ Gemini failed for executive summary. Attempting Groq fallback (llama-3.3-70b-versatile)...', error.message);
+    const groq = getRotatedGroq();
+    if (groq) {
+      try {
+        const chatCompletion = await groq.chat.completions.create({
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          model: 'llama-3.3-70b-versatile',
+        });
+        narrative = chatCompletion.choices[0].message.content.trim();
+        console.log('✅ Groq fallback successfully generated executive summary.');
+      } catch (groqError) {
+        console.error('❌ Groq fallback also failed:', groqError.message);
+      }
+    }
   }
+
+  // If both failed or we have no narrative, use a default fallback
+  if (!narrative) {
+    narrative = 'Climate assessment temporarily unavailable.';
+  }
+
+  const summaryData = { narrative, weightedScore };
+  
+  // Only cache valid narratives (not the fallback error message)
+  if (narrative && narrative !== 'Climate assessment temporarily unavailable.') {
+    summaryCache = { fingerprint, data: summaryData };
+  }
+  
+  return summaryData;
 }
 
 module.exports = {
