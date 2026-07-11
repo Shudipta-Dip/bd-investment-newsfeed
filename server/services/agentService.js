@@ -219,7 +219,7 @@ async function runAgent(userMessage) {
       "TOOL PRIORITY (CRITICAL - follow this order strictly):\n" +
       "1. ALWAYS call query_investment_database FIRST for any investment/news query.\n" +
       "2. ONLY use tavily_search_results if: the database returned zero matching articles, OR the user explicitly uses words like 'web', 'search online', 'external sources', or 'live internet'.\n" +
-      "3. When presenting Tavily web results, you MUST clearly label them with a prefix: '⚠️ External Source (not in BIDA database):' so the user knows the data is not from the verified internal archive.\n" +
+      "3. When presenting Tavily web results, you MUST clearly label them with a prefix: '⚠️ External Source (not in BIDA database):' and always hyperlink the source URL in standard markdown format, e.g., '[source_name](url)' (for example, '[reuters.com](https://reuters.com/...)'). The frontend will automatically style these markdown links as premium clickable chips.\n" +
       "4. Never mix internal database results and web results in the same bullet list without clearly separating them with section headers.\n\n" +
       "ANALYSIS INSTRUCTIONS:\n" +
       "- Qualitative Analysis: When summarizing articles, highlight key rationales and business implications. Focus on high-impact articles (impact_score >= 70).\n" +
