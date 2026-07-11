@@ -1069,6 +1069,32 @@ During development, multiple email sending strategies were attempted and abandon
 
 ---
 
+## 11. LangChain Agent Chat Integration
+
+To align with coursework requirements for LLM and Agentic AI architectures, the system features a live, conversational **BIDA AI Assistant** that operates as a reasoning agent using LangChain.
+
+### Overview
+A user can chat with the assistant directly from the dashboard via a floating chat bubble or invoke the backend endpoint at `POST /api/chat`.
+1. The endpoint starts the LangChain agent using the `ChatGroq` model (`llama-3.3-70b-versatile`).
+2. The agent is given explicit system instructions detailing its role as a BIDA Macro-Intelligence assistant.
+3. When asked questions, the agent uses **ReAct reasoning** to dynamically determine if it needs to call external database tools, executes the tools, parses the results, and synthesizes a final response.
+
+### Custom Tools Implemented
+*   **`get_current_climate_score`:**
+    *   *Purpose:* Retrieves the current national investment score and AI brief.
+    *   *Mechanism:* Fetches the active article set from Supabase and invokes `generateExecutiveSummary` (which reads from the in-memory cache if hit) to return score numbers and text descriptions.
+*   **`search_investment_news`:**
+    *   *Purpose:* Queries the database for articles about a specific topic.
+    *   *Input:* A query string (e.g. "Garments", "infrastructure").
+    *   *Mechanism:* Calls the articles model using full-text database filters and returns titles, sources, sentiments, and impact scores of matching entries.
+
+### Key Files & Roles
+*   **[agentService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/agentService.js):** Builds the LangChain agent, prompt templates, tools, and execution loop.
+*   **[AgentChatBubble.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/AgentChatBubble.tsx):** Floating assistant chat drawer rendering message lists, loading indicators, and user input fields.
+
+---
+
+
 ## Changelog
 
 > This section will be updated as we polish the project.
@@ -1099,4 +1125,5 @@ During development, multiple email sending strategies were attempted and abandon
 | 2026-07-08 | Relocated alert subscription widget to Dialog modal, added header "Set Email Alert" button, and implemented full Option C direct unsubscribe handler. | Changelog, 6, 10 |
 | 2026-07-09 | Swapped SMTP-based email dispatch with a generic HTTP Webhook trigger (`ALERT_WEBHOOK_URL`) to bypass Render SMTP port locks. | Changelog, 10 |
 | 2026-07-09 | Added a robust Groq-based fallback for generating executive summaries if Google Gemini API key quota limits (429) are exceeded. | Changelog, 3, 9 |
+| 2026-07-11 | Integrated LangChain Tool-Calling Agent Chat Endpoint (/api/chat) on the backend and added a floating AI Assistant chat widget on the frontend dashboard. | Changelog, 11 |
 
