@@ -1,6 +1,7 @@
 const { ChatGroq } = require("@langchain/groq");
 const { AgentExecutor, createToolCallingAgent } = require("langchain/agents");
-const { DynamicTool } = require("@langchain/core/tools");
+const { DynamicStructuredTool } = require("@langchain/core/tools");
+const { z } = require("zod");
 const { ChatPromptTemplate, MessagesPlaceholder } = require("@langchain/core/prompts");
 
 const models = require('../models');
@@ -33,27 +34,11 @@ async function runAgent(userMessage) {
 
   // 2. Define Custom Agent Tools
   
-  // Helper to parse tool input parameters safely (handles both raw JSON strings and pre-parsed objects)
-  const parseInputParams = (input) => {
-    if (!input) return {};
-    if (typeof input === 'object') return input;
-    if (typeof input === 'string') {
-      try {
-        const cleaned = input.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-        if (cleaned === "" || cleaned === "{}") return {};
-        return JSON.parse(cleaned);
-      } catch (e) {
-        // If it's not valid JSON, treat it as a query string
-        return { search: input };
-      }
-    }
-    return {};
-  };
-  
   // Tool 1: Get current climate score
-  const getClimateScoreTool = new DynamicTool({
+  const getClimateScoreTool = new DynamicStructuredTool({
     name: "get_current_climate_score",
     description: "Get the current Bangladesh investment climate index score (0-100) and the accompanying AI narrative summary.",
+    schema: z.object({}),
     func: async () => {
       try {
         const { data: articles, error } = await models.getArticles({ limit: 500 });
@@ -69,17 +54,21 @@ async function runAgent(userMessage) {
   });
 
   // Tool 2: Advanced Database Query Tool
-  const queryDatabaseTool = new DynamicTool({
+  const queryDatabaseTool = new DynamicStructuredTool({
     name: "query_investment_database",
-    description: "Query the database of scraped investment articles using filters. " +
-                 "Input MUST be a JSON string. Any of these fields are optional: " +
-                 "{ \"sentiment\": \"opportunity\"|\"risk\"|\"regulation\", \"search\": \"keyword\", \"region\": \"local\"|\"global\", \"min_impact\": number, \"max_impact\": number, \"limit\": number, \"include_archived\": boolean }. " +
-                 "Set \"include_archived\": true to search the past 60 days of news, otherwise it searches only the last 7 days. " +
-                 "Example input: { \"search\": \"FDI\", \"include_archived\": true, \"sentiment\": \"opportunity\" }",
-    func: async (jsonInput) => {
+    description: "Query the database of scraped investment articles using specific filters. " +
+                 "Set include_archived to true to search the past 60 days of news, otherwise it defaults to the last 7 days.",
+    schema: z.object({
+      sentiment: z.enum(["opportunity", "risk", "regulation"]).optional().describe("Filter by sentiment category"),
+      search: z.string().optional().describe("Keyword search query term"),
+      region: z.enum(["local", "global"]).optional().describe("Filter by region: local = Bangladesh only, global = international only"),
+      min_impact: z.number().optional().describe("Filter by minimum impact score (0-100)"),
+      max_impact: z.number().optional().describe("Filter by maximum impact score (0-100)"),
+      limit: z.number().optional().describe("Max number of articles to return (default 50)"),
+      include_archived: z.boolean().optional().describe("Set to true to search the 60-day historical archive instead of 7 days")
+    }),
+    func: async (params) => {
       try {
-        const params = parseInputParams(jsonInput);
-        
         const queryParams = {
           sentiment: params.sentiment,
           search: params.search,
@@ -118,20 +107,20 @@ async function runAgent(userMessage) {
         
         return `Found ${filtered.length} matching articles in the database:\n\n${summary}`;
       } catch (err) {
-        return `Failed to execute query: ${err.message}. Input was: ${JSON.stringify(jsonInput)}`;
+        return `Failed to execute query: ${err.message}. Parameters were: ${JSON.stringify(params)}`;
       }
     }
   });
 
   // Tool 3: Get breakdown of news coverage by country/region of origin (with archive support)
-  const getCoverageByCountryTool = new DynamicTool({
+  const getCoverageByCountryTool = new DynamicStructuredTool({
     name: "get_coverage_by_country",
-    description: "Get a statistical breakdown of which countries or regions are publishing investment news in our database. " +
-                 "Input must be a JSON string: { \"include_archived\": boolean }. Set to true to search the 60-day archive instead of the default 7-day dashboard window.",
-    func: async (jsonInput) => {
+    description: "Get a statistical breakdown of which countries or regions are publishing investment news in our database.",
+    schema: z.object({
+      include_archived: z.boolean().optional().describe("Set to true to search the 60-day historical archive instead of the default 7-day dashboard window")
+    }),
+    func: async (params) => {
       try {
-        const params = parseInputParams(jsonInput);
-        
         const daysLimit = params.include_archived ? 60 : 7;
         const { data: articles, error } = await models.getArticles({ limit: 1000, daysLimit });
         
@@ -153,7 +142,7 @@ async function runAgent(userMessage) {
           
         return `Breakdown of investment news coverage counts by country/region of origin (${daysLimit}-day window):\n${sorted}`;
       } catch (err) {
-        return `Error compiling country coverage stats: ${err.message}. Input was: ${jsonInput}`;
+        return `Error compiling country coverage stats: ${err.message}. Parameters were: ${JSON.stringify(params)}`;
       }
     }
   });
