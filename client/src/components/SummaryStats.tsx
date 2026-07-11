@@ -173,7 +173,7 @@ export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
           {/* Right side: Animated Globe (desktop only, centered in the remaining blank space, custom size fit) */}
           {regions.length > 0 && (
             <div className="hidden lg:flex items-center justify-center flex-grow self-stretch py-0">
-              <GlobePulse regions={regions} size={globeSize} speed={0.0025} />
+              <GlobePulse regions={regions} size={420} speed={0.0025} />
             </div>
           )}
         </div>

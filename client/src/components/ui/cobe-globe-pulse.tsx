@@ -184,7 +184,7 @@ export function GlobePulse({
         devicePixelRatio,
         width: size * devicePixelRatio,
         height: size * devicePixelRatio,
-        scale: 1.5,
+        scale: 2.0,
         phi: phi,
         theta: 0.15,
         dark: globeColors.dark,
