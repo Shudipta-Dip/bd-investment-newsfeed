@@ -138,3 +138,18 @@ export async function unsubscribeFromAlerts(email: string): Promise<{ success: b
   }
   return json;
 }
+
+/** Chat with BIDA LangChain Agent */
+export async function chatWithAgent(message: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  const json = await res.json();
+  if (!json.success) {
+    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to chat with agent";
+    throw new Error(errMsg);
+  }
+  return json.reply;
+}

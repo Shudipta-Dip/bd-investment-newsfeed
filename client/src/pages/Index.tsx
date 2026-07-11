@@ -10,6 +10,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { toNewsItem, type NewsItem } from "@/data/news";
 import { InfiniteGridBackground } from "@/components/InfiniteGridBackground";
 import { AlertSubscribe } from "@/components/AlertSubscribe";
+import { AgentChatBubble } from "@/components/AgentChatBubble";
 import { useSearchParams } from "react-router-dom";
 import { unsubscribeFromAlerts } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -488,6 +489,7 @@ const Index = () => {
           )}
         </section>
       </main>
+      <AgentChatBubble />
       </div>
     </div>
   );
