@@ -1,6 +1,7 @@
 const { ChatGroq } = require("@langchain/groq");
 const { AgentExecutor, createToolCallingAgent } = require("langchain/agents");
 const { DynamicStructuredTool } = require("@langchain/core/tools");
+const { TavilySearchResults } = require("@langchain/community/tools/tavily_search");
 const { z } = require("zod");
 const { ChatPromptTemplate, MessagesPlaceholder } = require("@langchain/core/prompts");
 
@@ -165,7 +166,32 @@ async function runAgent(userMessage) {
     }
   });
 
-  const tools = [getClimateScoreTool, queryDatabaseTool, getCoverageByCountryTool];
+  // Tool 4: Tavily Web Search (Fallback-only — used ONLY when DB has no results or user explicitly requests external data)
+  let webSearchTool = null;
+  if (process.env.TAVILY_API_KEY) {
+    try {
+      webSearchTool = new TavilySearchResults({
+        apiKey: process.env.TAVILY_API_KEY,
+        maxResults: 3,             // Hard cap at 3 results to protect Groq TPM quota
+        includeAnswer: true,       // Return Tavily's pre-synthesized answer snippet
+        includeRawContent: false,  // Exclude full page HTML to keep token counts low
+      });
+      // Override the default description to enforce strict fallback-only usage by the agent
+      webSearchTool.description =
+        "Search the live public web for Bangladesh investment and economic news. " +
+        "IMPORTANT: Use this tool ONLY as a last resort — specifically when: " +
+        "(1) The internal database returned zero results for the user's query, OR " +
+        "(2) The user explicitly asks for live web data or external sources. " +
+        "Always prefer query_investment_database first. " +
+        "When using this tool, always clearly label results as externally sourced.";
+    } catch (err) {
+      console.warn(`[Agent] Tavily tool failed to initialize: ${err.message}. Web search will be disabled.`);
+    }
+  }
+
+  const tools = webSearchTool
+    ? [getClimateScoreTool, queryDatabaseTool, getCoverageByCountryTool, webSearchTool]
+    : [getClimateScoreTool, queryDatabaseTool, getCoverageByCountryTool];
 
   // 3. Define Prompt Structure (matches LangChain expectations)
   const prompt = ChatPromptTemplate.fromMessages([
@@ -190,6 +216,11 @@ async function runAgent(userMessage) {
       "- Map terms like 'foreign', 'international', 'global' -> region='global'.\n" +
       "- Extract single-noun keywords for the 'search' field (e.g., use 'energy' instead of 'energy sector developments').\n" +
       "- By default, tools fetch the last 7 days of news. If the user mentions 'past month', 'archive', '60 days', or asks historical context, you MUST set include_archived=true in the tool call.\n\n" +
+      "TOOL PRIORITY (CRITICAL - follow this order strictly):\n" +
+      "1. ALWAYS call query_investment_database FIRST for any investment/news query.\n" +
+      "2. ONLY use tavily_search_results if: the database returned zero matching articles, OR the user explicitly uses words like 'web', 'search online', 'external sources', or 'live internet'.\n" +
+      "3. When presenting Tavily web results, you MUST clearly label them with a prefix: '⚠️ External Source (not in BIDA database):' so the user knows the data is not from the verified internal archive.\n" +
+      "4. Never mix internal database results and web results in the same bullet list without clearly separating them with section headers.\n\n" +
       "ANALYSIS INSTRUCTIONS:\n" +
       "- Qualitative Analysis: When summarizing articles, highlight key rationales and business implications. Focus on high-impact articles (impact_score >= 70).\n" +
       "- Quantitative Analysis: If asked for trends or comparisons (e.g., percentages, volumes), first pull the data, then perform the math (averages, counts, ratios) explicitly in your response. Always present structured comparisons using GFM markdown tables or bullet lists."
