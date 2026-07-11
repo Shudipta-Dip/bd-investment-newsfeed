@@ -32,8 +32,8 @@ export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
     const updateSize = () => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (rect) {
-        // Enforce the size to match parent height minus 8px padding (leaving exactly 2px gap top and bottom)
-        const size = Math.max(180, Math.min(320, rect.height - 8));
+        // Enforce the size to match parent height minus 6px (leaves exactly 2px gap top and bottom)
+        const size = Math.max(180, Math.min(420, rect.height - 6));
         setGlobeSize(size);
       }
     };

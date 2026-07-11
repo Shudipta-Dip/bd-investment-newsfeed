@@ -179,10 +179,11 @@ export function GlobePulse({
     function init() {
       if (globe) return
 
+      const devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
       globe = createGlobe(canvas, {
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
-        width: size,
-        height: size,
+        devicePixelRatio,
+        width: size * devicePixelRatio,
+        height: size * devicePixelRatio,
         phi: phi,
         theta: 0.15,
         dark: globeColors.dark,
