@@ -22,6 +22,40 @@ export const AgentChatBubble = () => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [isMobile, setIsMobile] = useState(false);
+  const [width, setWidth] = useState(400);
+  const [height, setHeight] = useState(550);
+
+  // Resize window guard
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Top-Left Drag Handler
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const newWidth = window.innerWidth - 24 - moveEvent.clientX;
+      const newHeight = window.innerHeight - 24 - moveEvent.clientY;
+      // Enforce bounds: min width 340px, max 800px; min height 400px, max 900px
+      setWidth(Math.max(340, Math.min(800, newWidth)));
+      setHeight(Math.max(400, Math.min(900, newHeight)));
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   // Auto-scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,7 +101,23 @@ export const AgentChatBubble = () => {
 
       {/* Chat Window Panel */}
       {isOpen && (
-        <div className="flex flex-col w-[360px] sm:w-[400px] h-[500px] bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+        <div 
+          className="flex flex-col relative bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-200"
+          style={{
+            width: isMobile ? "calc(100vw - 32px)" : `${width}px`,
+            height: isMobile ? "calc(100vh - 100px)" : `${height}px`,
+          }}
+        >
+          {/* Top-Left Drag Handle to resize (Desktop only) */}
+          {!isMobile && (
+            <div
+              onMouseDown={handleMouseDown}
+              className="absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-50 flex items-center justify-center group"
+              title="Drag to resize chatbox"
+            >
+              <div className="absolute top-1.5 left-1.5 w-2 h-2 border-t-2 border-l-2 border-muted-foreground/30 group-hover:border-primary transition-colors duration-150" />
+            </div>
+          )}
           
           {/* Header */}
           <div className="flex items-center justify-between p-4 bg-primary text-primary-foreground border-b border-border/10">
