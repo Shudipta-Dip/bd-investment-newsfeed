@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { MessageSquare, X, Send, Brain, Loader2 } from "lucide-react";
 import { chatWithAgent } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Message {
   sender: "user" | "agent";
@@ -97,13 +99,53 @@ export const AgentChatBubble = () => {
                 className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                  className={`max-w-[85%] p-3 rounded-2xl shadow-sm ${
                     m.sender === "user"
                       ? "bg-primary text-primary-foreground rounded-tr-none"
                       : "bg-muted text-foreground border border-border/40 rounded-tl-none"
                   }`}
                 >
-                  {m.text}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    className={`prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm leading-relaxed break-words ${
+                      m.sender === "user" ? "prose-headings:text-primary-foreground text-primary-foreground" : "text-foreground"
+                    }`}
+                    components={{
+                      // Tables styled and made responsive
+                      table: ({ node, ...props }) => (
+                        <div className="my-2 overflow-x-auto rounded-lg border border-border bg-slate-900/30">
+                          <table className="min-w-full divide-y divide-border text-[11px] sm:text-[12px]" {...props} />
+                        </div>
+                      ),
+                      thead: ({ node, ...props }) => <thead className="bg-muted text-muted-foreground font-semibold" {...props} />,
+                      th: ({ node, ...props }) => <th className="px-2 py-1 text-left" {...props} />,
+                      td: ({ node, ...props }) => <td className="px-2 py-1 border-t border-border/40 whitespace-normal align-top" {...props} />,
+                      tr: ({ node, ...props }) => <tr className="hover:bg-muted/30 transition-colors" {...props} />,
+                      
+                      // Links styled as premium chips
+                      a: ({ node, href, children, ...props }) => (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded px-1.5 py-0.5 mt-0.5 no-underline transition-all"
+                          {...props}
+                        >
+                          {children}
+                        </a>
+                      ),
+                      
+                      // Spacing and styling tweaks for lists
+                      ul: ({ node, ...props }) => <ul className="list-disc pl-4 my-1.5 space-y-0.5" {...props} />,
+                      ol: ({ node, ...props }) => <ol className="list-decimal pl-4 my-1.5 space-y-0.5" {...props} />,
+                      li: ({ node, ...props }) => <li className="marker:text-primary" {...props} />,
+                      
+                      // Paragraph tag override to prevent margin spacing issues inside bubble
+                      p: ({ node, ...props }) => <p className="m-0 leading-normal" {...props} />,
+                    }}
+                  >
+                    {m.text}
+                  </ReactMarkdown>
                 </div>
               </div>
             ))}
