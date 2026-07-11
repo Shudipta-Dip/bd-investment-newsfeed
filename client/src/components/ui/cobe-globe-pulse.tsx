@@ -143,7 +143,6 @@ export function GlobePulse({
     if (!canvasRef.current) return
     const canvas = canvasRef.current
     let globe: ReturnType<typeof createGlobe> | null = null
-    let animationId: number
 
     // Orient the globe to focus on South Asia (Bangladesh) by default
     let phi = 4.8 // Rotated to show South Asia
@@ -171,18 +170,15 @@ export function GlobePulse({
           size: 0.04,
         })),
         opacity: 0.85,
+        onRender: (state) => {
+          if (!isPausedRef.current) {
+            phi += speed;
+          }
+          state.phi = phi + phiOffsetRef.current + dragOffset.current.phi;
+          state.theta = 0.15 + thetaOffsetRef.current + dragOffset.current.theta;
+        }
       })
 
-      function animate() {
-        if (!isPausedRef.current) phi += speed
-        globe!.update({
-          phi: phi + phiOffsetRef.current + dragOffset.current.phi,
-          theta: 0.15 + thetaOffsetRef.current + dragOffset.current.theta,
-        })
-        animationId = requestAnimationFrame(animate)
-      }
-
-      animate()
       setTimeout(() => canvas && (canvas.style.opacity = "1"))
     }
 
@@ -199,7 +195,6 @@ export function GlobePulse({
     }
 
     return () => {
-      if (animationId) cancelAnimationFrame(animationId)
       if (globe) globe.destroy()
     }
   }, [markers, speed])
