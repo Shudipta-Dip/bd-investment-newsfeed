@@ -14,7 +14,27 @@ const { sendAlertEmail } = require('../services/emailService');
  * GET /api/health
  * Quick check to see if the server is alive.
  */
-const healthCheck = (_req, res) => {
+const healthCheck = async (_req, res) => {
+  // Fire-and-forget background cleanup of legacy 0-impact articles
+  (async () => {
+    try {
+      const supabase = require('../config/database');
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('news_articles')
+          .delete()
+          .eq('impact_score', 0)
+          .select('id');
+        if (error) throw error;
+        if (data && data.length > 0) {
+          console.log(`🧹 Healthcheck Auto-Cleanup: Pruned ${data.length} legacy 0-impact articles from DB.`);
+        }
+      }
+    } catch (cleanErr) {
+      console.error('⚠️ Healthcheck cleanup background task failed:', cleanErr.message);
+    }
+  })();
+
   res.json({
     status: 'ok',
     message: 'BD Investment Newsfeed API is running',

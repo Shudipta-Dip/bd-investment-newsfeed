@@ -170,7 +170,10 @@ async function scrapeAll() {
     // --- Phase 4: Deduplicate and Save ---
     const preSaveCount = validatedArticles.length;
     const uniqueMap = new Map();
-    validatedArticles.forEach(a => uniqueMap.set(a.url, a));
+    // Exclude articles with impact_score === 0 (unimportant/no business implication)
+    validatedArticles
+      .filter(a => a.impact_score !== 0)
+      .forEach(a => uniqueMap.set(a.url, a));
     const dedupedArticles = Array.from(uniqueMap.values());
     
     if (dedupedArticles.length > 0) {

@@ -26,6 +26,7 @@ async function getArticles({ sentiment, search, region, magnitude, limit = 500 }
     .from(TABLE)
     .select('*')
     .gte('created_at', sevenDaysAgo)
+    .neq('impact_score', 0)
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -169,24 +170,28 @@ async function getStats() {
   const { count: total } = await supabase
     .from(TABLE)
     .select('*', { count: 'exact', head: true })
+    .neq('impact_score', 0)
     .gte('created_at', sevenDaysAgo);
 
   const { count: opportunity } = await supabase
     .from(TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('sentiment', 'opportunity')
+    .neq('impact_score', 0)
     .gte('created_at', sevenDaysAgo);
 
   const { count: risk } = await supabase
     .from(TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('sentiment', 'risk')
+    .neq('impact_score', 0)
     .gte('created_at', sevenDaysAgo);
 
   const { count: regulation } = await supabase
     .from(TABLE)
     .select('*', { count: 'exact', head: true })
     .eq('sentiment', 'regulation')
+    .neq('impact_score', 0)
     .gte('created_at', sevenDaysAgo);
 
   return {
