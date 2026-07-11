@@ -33,6 +33,23 @@ async function runAgent(userMessage) {
 
   // 2. Define Custom Agent Tools
   
+  // Helper to parse tool input parameters safely (handles both raw JSON strings and pre-parsed objects)
+  const parseInputParams = (input) => {
+    if (!input) return {};
+    if (typeof input === 'object') return input;
+    if (typeof input === 'string') {
+      try {
+        const cleaned = input.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+        if (cleaned === "" || cleaned === "{}") return {};
+        return JSON.parse(cleaned);
+      } catch (e) {
+        // If it's not valid JSON, treat it as a query string
+        return { search: input };
+      }
+    }
+    return {};
+  };
+  
   // Tool 1: Get current climate score
   const getClimateScoreTool = new DynamicTool({
     name: "get_current_climate_score",
@@ -61,12 +78,7 @@ async function runAgent(userMessage) {
                  "Example input: { \"search\": \"FDI\", \"include_archived\": true, \"sentiment\": \"opportunity\" }",
     func: async (jsonInput) => {
       try {
-        let params = {};
-        if (jsonInput && jsonInput.trim() !== "") {
-          // Clean possible markdown wrapper if the agent formats it as ```json ... ```
-          let cleaned = jsonInput.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-          params = JSON.parse(cleaned);
-        }
+        const params = parseInputParams(jsonInput);
         
         const queryParams = {
           sentiment: params.sentiment,
@@ -106,7 +118,7 @@ async function runAgent(userMessage) {
         
         return `Found ${filtered.length} matching articles in the database:\n\n${summary}`;
       } catch (err) {
-        return `Failed to execute query: ${err.message}. Ensure your input is a valid JSON string. Input was: ${jsonInput}`;
+        return `Failed to execute query: ${err.message}. Input was: ${JSON.stringify(jsonInput)}`;
       }
     }
   });
@@ -118,11 +130,7 @@ async function runAgent(userMessage) {
                  "Input must be a JSON string: { \"include_archived\": boolean }. Set to true to search the 60-day archive instead of the default 7-day dashboard window.",
     func: async (jsonInput) => {
       try {
-        let params = {};
-        if (jsonInput && jsonInput.trim() !== "") {
-          let cleaned = jsonInput.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-          params = JSON.parse(cleaned);
-        }
+        const params = parseInputParams(jsonInput);
         
         const daysLimit = params.include_archived ? 60 : 7;
         const { data: articles, error } = await models.getArticles({ limit: 1000, daysLimit });
