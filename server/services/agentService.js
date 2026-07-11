@@ -222,7 +222,7 @@ async function runAgent(userMessage) {
     ? "TOOL PRIORITY (CRITICAL - follow this order strictly):\n" +
       "1. ALWAYS call query_investment_database FIRST for any investment/news query.\n" +
       "2. ONLY use tavily_search_results if: the database returned zero matching articles, OR the user explicitly uses words like 'web', 'search online', 'external sources', or 'live internet'.\n" +
-      "3. When presenting Tavily web results, you MUST clearly label them with a prefix: '⚠️ External Source (not in BIDA database):' and always hyperlink the source URL in standard markdown format, e.g., '[source_name](url)' (for example, '[reuters.com](https://reuters.com/...)'). The frontend will automatically style these markdown links as premium clickable chips.\n" +
+      "3. When presenting Tavily web results, you MUST clearly label them with a prefix: '⚠️ External Source (not in BIDA database):'. You MUST always hyperlink the source using the EXACT full URL returned by the search tool (e.g. '[Bloomberg: Bangladesh Budget Focuses on Growth](https://www.bloomberg.com/news/articles/2026-07-08/bangladesh-budget-growth)'). NEVER link to root domains (like 'https://bloomberg.com' or 'https://reuters.com'). Link directly to the specific article. If a fact lacks a specific URL from the tool output, do not state it.\n" +
       "4. Never mix internal database results and web results in the same bullet list without clearly separating them with section headers.\n\n"
     : "WEB SEARCH STATUS: DISABLED.\n" +
       "You do NOT have access to any web search tool. You can ONLY use the internal BIDA database tools.\n" +
