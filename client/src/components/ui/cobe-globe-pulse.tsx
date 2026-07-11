@@ -80,12 +80,14 @@ interface GlobePulseProps {
   regions?: string[]
   className?: string
   speed?: number
+  size?: number
 }
 
 export function GlobePulse({
   regions = [],
   className = "",
   speed = 0.003,
+  size = 280,
 }: GlobePulseProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null)
@@ -175,13 +177,12 @@ export function GlobePulse({
     let phi = 4.8 // Rotated to show South Asia
 
     function init() {
-      const width = canvas.offsetWidth
-      if (width === 0 || globe) return
+      if (globe) return
 
       globe = createGlobe(canvas, {
         devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
-        width,
-        height: width,
+        width: size,
+        height: size,
         phi: phi,
         theta: 0.15,
         dark: globeColors.dark,
@@ -209,27 +210,20 @@ export function GlobePulse({
       setTimeout(() => canvas && (canvas.style.opacity = "1"))
     }
 
-    if (canvas.offsetWidth > 0) {
-      init()
-    } else {
-      const ro = new ResizeObserver((entries) => {
-        if (entries[0]?.contentRect.width > 0) {
-          ro.disconnect()
-          init()
-        }
-      })
-      ro.observe(canvas)
-    }
+    init()
 
     return () => {
       if (globe) globe.destroy()
     }
-  }, [markers, speed, globeColors])
+  }, [markers, speed, globeColors, size])
 
   if (markers.length === 0) return null
 
   return (
-    <div className={`relative aspect-square select-none ${className}`}>
+    <div 
+      className={`relative select-none ${className}`}
+      style={{ width: `${size}px`, height: `${size}px` }}
+    >
       <style>{`
         @keyframes pulse-expand {
           0% { transform: scaleX(0.3) scaleY(0.3); opacity: 0.8; }
