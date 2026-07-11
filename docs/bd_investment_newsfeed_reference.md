@@ -1096,6 +1096,24 @@ A user can chat with the assistant directly from the dashboard via a floating ch
 *   **[agentService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/agentService.js):** Builds the LangChain agent, prompt templates, tools, and execution loop.
 *   **[AgentChatBubble.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/AgentChatBubble.tsx):** Floating assistant chat drawer rendering message lists, loading indicators, and user input fields.
 
+
+---
+
+## 12. Conversational UI & GFM Rendering Engine
+
+To make the AI Assistant's qualitative and quantitative research output readable and visually premium, the frontend is equipped with a responsive rendering pipeline that processes the agent's markdown payloads.
+
+### Markdown Rendering Pipeline
+Instead of displaying responses as flat text, [AgentChatBubble.tsx](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/client/src/components/AgentChatBubble.tsx) intercepts the agent message array and streams it through a custom-configured React Markdown compiler:
+1. **Gfm Support:** Leverages `remark-gfm` to parse task lists, strikethrough notation, URLs, and GitHub-style table formats.
+2. **Tailwind Typography:** Integrates standard Tailwind Prose classes (`prose prose-sm dark:prose-invert`) to style headers, code blocks, lists, and quote segments.
+
+### Responsive Component Layouts
+The markdown components are overwritten with customized React elements to guarantee responsiveness on mobile devices:
+*   **Scrollable Table Wrapper:** Wraps all tables (`<table>`) in an `overflow-x-auto border rounded-lg bg-slate-900/30` wrapper, preventing tables from breaking the sidebar layout and enabling horizontal scrolling.
+*   **Action Link Chips:** Overrides standard HTML anchors (`<a>`) to render as secondary brand badges with hover transitions, making reference links easily clickable.
+*   **Colored Bullet Indicators:** Sets custom markers on lists (`ul` / `ol`) using the BIDA primary brand theme.
+
 ---
 
 
@@ -1130,4 +1148,5 @@ A user can chat with the assistant directly from the dashboard via a floating ch
 | 2026-07-09 | Swapped SMTP-based email dispatch with a generic HTTP Webhook trigger (`ALERT_WEBHOOK_URL`) to bypass Render SMTP port locks. | Changelog, 10 |
 | 2026-07-09 | Added a robust Groq-based fallback for generating executive summaries if Google Gemini API key quota limits (429) are exceeded. | Changelog, 3, 9 |
 | 2026-07-11 | Integrated LangChain Tool-Calling Agent Chat Endpoint (/api/chat) on the backend and added a floating AI Assistant chat widget on the frontend dashboard. | Changelog, 11 |
+| 2026-07-11 | Configured ReactMarkdown and remark-gfm parser on the frontend chat bubble, custom-styling links as badge chips and wrapping tables for mobile-responsive horizontal scrolling. | Changelog, 12 |
 
