@@ -74,7 +74,37 @@ async function runAgent(userMessage) {
     }
   });
 
-  const tools = [getClimateScoreTool, searchNewsTool];
+  // Tool 3: Get breakdown of news coverage by country/region of origin
+  const getCoverageByCountryTool = new DynamicTool({
+    name: "get_coverage_by_country",
+    description: "Get a breakdown of which countries or regions are currently publishing the investment articles stored in our database.",
+    func: async () => {
+      try {
+        const { data: articles, error } = await models.getArticles({ limit: 500 });
+        if (error) return `Error fetching coverage stats: ${error}`;
+        if (!articles || articles.length === 0) {
+          return "No active articles in the database to compile country coverage statistics.";
+        }
+        
+        const counts = {};
+        articles.forEach(a => {
+          const reg = a.region || "International";
+          counts[reg] = (counts[reg] || 0) + 1;
+        });
+        
+        const sorted = Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([region, count]) => ` - ${region}: ${count} article(s)`)
+          .join('\n');
+          
+        return `Breakdown of investment news coverage counts by country/region:\n${sorted}`;
+      } catch (err) {
+        return `Error compiling country coverage stats: ${err.message}`;
+      }
+    }
+  });
+
+  const tools = [getClimateScoreTool, searchNewsTool, getCoverageByCountryTool];
 
   // 3. Define Prompt Structure (matches LangChain expectations)
   const prompt = ChatPromptTemplate.fromMessages([

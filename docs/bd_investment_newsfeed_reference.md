@@ -1087,6 +1087,9 @@ A user can chat with the assistant directly from the dashboard via a floating ch
     *   *Purpose:* Queries the database for articles about a specific topic.
     *   *Input:* A query string (e.g. "Garments", "infrastructure").
     *   *Mechanism:* Calls the articles model using full-text database filters and returns titles, sources, sentiments, and impact scores of matching entries.
+*   **`get_coverage_by_country`:**
+    *   *Purpose:* Gets a statistical breakdown of article publication count grouped by country/region of origin.
+    *   *Mechanism:* Pulls active database articles and aggregates them in memory, sorting by frequency count to list the most active media sources by country.
 
 ### Key Files & Roles
 *   **[agentService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/agentService.js):** Builds the LangChain agent, prompt templates, tools, and execution loop.
