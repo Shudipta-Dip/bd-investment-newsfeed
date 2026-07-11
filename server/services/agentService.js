@@ -64,15 +64,18 @@ async function runAgent(userMessage) {
       region: z.enum(["local", "global"]).optional().describe("Filter by region: local = Bangladesh only, global = international only"),
       min_impact: z.number().optional().describe("Filter by minimum impact score (0-100)"),
       max_impact: z.number().optional().describe("Filter by maximum impact score (0-100)"),
-      limit: z.number().optional().describe("Max number of articles to return (default 50)"),
+      limit: z.number().optional().describe("Max number of articles to return (default 20, max limit 50 to prevent token limits)"),
       include_archived: z.boolean().optional().describe("Set to true to search the 60-day historical archive instead of 7 days")
     }),
     func: async (params) => {
       try {
+        // Enforce a safety limit ceiling of 50 to prevent Groq TPM (Tokens Per Minute) limit crashes (413 Request Too Large)
+        const limit = Math.min(params.limit || 20, 50);
+        
         const queryParams = {
           sentiment: params.sentiment,
           search: params.search,
-          limit: params.limit || 100,
+          limit: limit,
           daysLimit: params.include_archived ? 60 : 7,
         };
         
@@ -98,12 +101,20 @@ async function runAgent(userMessage) {
           return `Articles found in DB, but none matched impact range limits: min_impact=${params.min_impact}, max_impact=${params.max_impact}`;
         }
         
-        const summary = filtered.map((a, i) =>
-          `${i+1}. [${a.source}] ${a.title}\n` +
-          `   - Sentiment: ${a.sentiment} | Impact: ${a.impact_score}/100 | Region: ${a.region}\n` +
-          `   - Ingested: ${a.created_at.slice(0, 10)} | URL: ${a.url}\n` +
-          `   - AI Brief: "${a.ai_rationale || 'No rationale available'}"`
-        ).join('\n\n');
+        // Dynamically compress article details for larger sets to save tokens
+        const summary = filtered.map((a, i) => {
+          const baseStr = `${i+1}. [${a.source}] ${a.title} | Sentiment: ${a.sentiment} | Impact: ${a.impact_score}/100 | Region: ${a.region}`;
+          
+          if (filtered.length <= 12) {
+            // Render full metadata including URL and AI explanation only for smaller result lists
+            return `${baseStr}\n` +
+              `   - Ingested: ${a.created_at.slice(0, 10)} | URL: ${a.url}\n` +
+              `   - AI Brief: "${a.ai_rationale || 'No rationale available'}"`;
+          }
+          
+          // Compact format: omit long URLs and AI briefs for bulk list to avoid TPM rate limit exhaustion (413)
+          return baseStr;
+        }).join('\n\n');
         
         return `Found ${filtered.length} matching articles in the database:\n\n${summary}`;
       } catch (err) {
