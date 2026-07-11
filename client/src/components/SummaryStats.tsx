@@ -6,6 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { GlobePulse } from "@/components/ui/cobe-globe-pulse";
 
 /** Map weighted score to a qualitative label */
 function confidenceLabel(score: number): { text: string; color: string } {
@@ -16,7 +17,12 @@ function confidenceLabel(score: number): { text: string; color: string } {
   return { text: "Bearish", color: "text-red-500" };
 }
 
-export const SummaryStats = () => {
+interface SummaryStatsProps {
+  /** Country/region names from the currently displayed news articles */
+  regions?: string[];
+}
+
+export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
   const { data: stats, isLoading: statsLoading } = useStats();
   const { data: executive, isLoading: execLoading, isError: execError } = useExecutiveSummary();
 
@@ -65,6 +71,7 @@ export const SummaryStats = () => {
       {/* Executive Climate Brief */}
       <div className="bg-card p-6 rounded-lg border border-border shadow-card">
         <div className="flex items-start gap-4">
+          {/* Left side: Text content */}
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-3">
               <Brain className="w-4 h-4 text-primary" strokeWidth={2} />
@@ -137,6 +144,13 @@ export const SummaryStats = () => {
               </p>
             )}
           </div>
+
+          {/* Right side: Animated Globe (desktop only) */}
+          {regions.length > 0 && (
+            <div className="hidden lg:block w-48 xl:w-56 flex-shrink-0">
+              <GlobePulse regions={regions} speed={0.002} />
+            </div>
+          )}
         </div>
       </div>
 

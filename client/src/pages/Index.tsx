@@ -183,6 +183,12 @@ const Index = () => {
     [newsItems],
   );
 
+  // Extract unique region/country names for the globe visualization
+  const activeRegions = useMemo(
+    () => [...new Set((rawArticles ?? []).map((a) => a.region).filter(Boolean))],
+    [rawArticles],
+  );
+
   const exportToCSV = () => {
     if (!rawArticles || rawArticles.length === 0) return;
 
@@ -284,7 +290,7 @@ const Index = () => {
             investment landscape.
           </p>
           <div className="mt-8">
-            <SummaryStats />
+            <SummaryStats regions={activeRegions} />
           </div>
         </section>
 
