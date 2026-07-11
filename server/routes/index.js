@@ -32,4 +32,9 @@ router.get('/executive-summary', controllers.getExecutiveSummary);
 router.post('/alerts/subscribe', controllers.subscribeAlert);
 router.delete('/alerts/unsubscribe', controllers.unsubscribeAlert);
 
+// ---------------------------------------------------------------------------
+// LangChain Agent Chat
+// ---------------------------------------------------------------------------
+router.post('/chat', controllers.chatWithAgent);
+
 module.exports = router;

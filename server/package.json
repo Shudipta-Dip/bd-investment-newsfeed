@@ -18,7 +18,9 @@
     "groq-sdk": "^1.1.2",
     "jsdom": "^29.1.0",
     "node-cron": "^4.2.1",
-
+    "langchain": "^0.3.0",
+    "@langchain/core": "^0.3.0",
+    "@langchain/groq": "^0.1.0",
     "rss-parser": "^3.13.0"
   },
   "devDependencies": {

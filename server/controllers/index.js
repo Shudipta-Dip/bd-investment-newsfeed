@@ -9,6 +9,7 @@ const models = require('../models');
 const { scrapeAll } = require('../services/scraper');
 const { generateExecutiveSummary } = require('../services/aiValidator');
 const { sendAlertEmail } = require('../services/emailService');
+const { runAgent } = require('../services/agentService');
 
 /**
  * GET /api/health
@@ -291,6 +292,24 @@ const unsubscribeAlert = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/chat
+ * Chat with the LangChain reasoning agent.
+ */
+const chatWithAgent = async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message || message.trim() === '') {
+      return res.status(400).json({ success: false, error: 'Message content is required.' });
+    }
+    const reply = await runAgent(message);
+    res.json({ success: true, reply });
+  } catch (err) {
+    console.error('Agent chat error:', err);
+    res.status(500).json({ success: false, error: err.message || 'Error occurred during agent execution.' });
+  }
+};
+
 module.exports = {
   healthCheck,
   getNews,
@@ -302,4 +321,5 @@ module.exports = {
   getExecutiveSummary,
   subscribeAlert,
   unsubscribeAlert,
+  chatWithAgent,
 };
