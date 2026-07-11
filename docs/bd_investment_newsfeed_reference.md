@@ -1083,13 +1083,14 @@ A user can chat with the assistant directly from the dashboard via a floating ch
 *   **`get_current_climate_score`:**
     *   *Purpose:* Retrieves the current national investment score and AI brief.
     *   *Mechanism:* Fetches the active article set from Supabase and invokes `generateExecutiveSummary` (which reads from the in-memory cache if hit) to return score numbers and text descriptions.
-*   **`search_investment_news`:**
-    *   *Purpose:* Queries the database for articles about a specific topic.
-    *   *Input:* A query string (e.g. "Garments", "infrastructure").
-    *   *Mechanism:* Calls the articles model using full-text database filters and returns titles, sources, sentiments, and impact scores of matching entries.
+*   **`query_investment_database`:**
+    *   *Purpose:* Advanced database query engine that allows searching for articles with optional key filters (sentiment, region, keyword, impact ranges, and archives).
+    *   *Input:* A JSON-formatted parameters string.
+    *   *Mechanism:* Directly constructs a query on Supabase, filters by date range (7 days default or 60 days if archive toggle is passed), and returns titles, sources, ingestion dates, and intelligence notes.
 *   **`get_coverage_by_country`:**
-    *   *Purpose:* Gets a statistical breakdown of article publication count grouped by country/region of origin.
-    *   *Mechanism:* Pulls active database articles and aggregates them in memory, sorting by frequency count to list the most active media sources by country.
+    *   *Purpose:* Gets a statistical percentage breakdown of article publication counts by publishing region.
+    *   *Input:* A JSON string `{ "include_archived": boolean }`.
+    *   *Mechanism:* Aggregates matching articles and counts their regional occurrence, sorting them by frequency.
 
 ### Key Files & Roles
 *   **[agentService.js](file:///c:/Users/USER/.gemini/antigravity-ide/scratch/bd-investment-newsfeed/server/services/agentService.js):** Builds the LangChain agent, prompt templates, tools, and execution loop.

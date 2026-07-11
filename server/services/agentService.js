@@ -51,39 +51,85 @@ async function runAgent(userMessage) {
     }
   });
 
-  // Tool 2: Search investment articles
-  const searchNewsTool = new DynamicTool({
-    name: "search_investment_news",
-    description: "Search the database for recently scraped articles about a specific topic. Input should be a search query string (e.g., 'inflation', 'port', 'infrastructure').",
-    func: async (query) => {
+  // Tool 2: Advanced Database Query Tool
+  const queryDatabaseTool = new DynamicTool({
+    name: "query_investment_database",
+    description: "Query the database of scraped investment articles using filters. " +
+                 "Input MUST be a JSON string. Any of these fields are optional: " +
+                 "{ \"sentiment\": \"opportunity\"|\"risk\"|\"regulation\", \"search\": \"keyword\", \"region\": \"local\"|\"global\", \"min_impact\": number, \"max_impact\": number, \"limit\": number, \"include_archived\": boolean }. " +
+                 "Set \"include_archived\": true to search the past 60 days of news, otherwise it searches only the last 7 days. " +
+                 "Example input: { \"search\": \"FDI\", \"include_archived\": true, \"sentiment\": \"opportunity\" }",
+    func: async (jsonInput) => {
       try {
-        const { data: articles, error } = await models.getArticles({ search: query, limit: 10 });
-        if (error) return `Error searching articles: ${error}`;
-        if (!articles || articles.length === 0) {
-          return `No articles found matching the query "${query}".`;
+        let params = {};
+        if (jsonInput && jsonInput.trim() !== "") {
+          // Clean possible markdown wrapper if the agent formats it as ```json ... ```
+          let cleaned = jsonInput.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+          params = JSON.parse(cleaned);
         }
         
-        const summaryList = articles.map((a, i) => 
-          `${i+1}. [${a.source}] ${a.title} (Sentiment: ${a.sentiment}, Impact Score: ${a.impact_score}/100)`
-        ).join('\n');
+        const queryParams = {
+          sentiment: params.sentiment,
+          search: params.search,
+          limit: params.limit || 100,
+          daysLimit: params.include_archived ? 60 : 7,
+        };
         
-        return `Found ${articles.length} articles matching "${query}":\n${summaryList}`;
+        if (params.region) {
+          queryParams.region = params.region === 'local' ? 'Bangladesh' : 'global';
+        }
+        
+        const { data: articles, error } = await models.getArticles(queryParams);
+        if (error) return `Error fetching articles: ${error}`;
+        if (!articles || articles.length === 0) {
+          return `No articles found matching filters: ${JSON.stringify(params)}`;
+        }
+        
+        let filtered = articles;
+        if (typeof params.min_impact === 'number') {
+          filtered = filtered.filter(a => (a.impact_score || 0) >= params.min_impact);
+        }
+        if (typeof params.max_impact === 'number') {
+          filtered = filtered.filter(a => (a.impact_score || 0) <= params.max_impact);
+        }
+        
+        if (filtered.length === 0) {
+          return `Articles found in DB, but none matched impact range limits: min_impact=${params.min_impact}, max_impact=${params.max_impact}`;
+        }
+        
+        const summary = filtered.map((a, i) =>
+          `${i+1}. [${a.source}] ${a.title}\n` +
+          `   - Sentiment: ${a.sentiment} | Impact: ${a.impact_score}/100 | Region: ${a.region}\n` +
+          `   - Ingested: ${a.created_at.slice(0, 10)} | URL: ${a.url}\n` +
+          `   - AI Brief: "${a.ai_rationale || 'No rationale available'}"`
+        ).join('\n\n');
+        
+        return `Found ${filtered.length} matching articles in the database:\n\n${summary}`;
       } catch (err) {
-        return `Error searching articles: ${err.message}`;
+        return `Failed to execute query: ${err.message}. Ensure your input is a valid JSON string. Input was: ${jsonInput}`;
       }
     }
   });
 
-  // Tool 3: Get breakdown of news coverage by country/region of origin
+  // Tool 3: Get breakdown of news coverage by country/region of origin (with archive support)
   const getCoverageByCountryTool = new DynamicTool({
     name: "get_coverage_by_country",
-    description: "Get a breakdown of which countries or regions are currently publishing the investment articles stored in our database.",
-    func: async () => {
+    description: "Get a statistical breakdown of which countries or regions are publishing investment news in our database. " +
+                 "Input must be a JSON string: { \"include_archived\": boolean }. Set to true to search the 60-day archive instead of the default 7-day dashboard window.",
+    func: async (jsonInput) => {
       try {
-        const { data: articles, error } = await models.getArticles({ limit: 500 });
+        let params = {};
+        if (jsonInput && jsonInput.trim() !== "") {
+          let cleaned = jsonInput.trim().replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+          params = JSON.parse(cleaned);
+        }
+        
+        const daysLimit = params.include_archived ? 60 : 7;
+        const { data: articles, error } = await models.getArticles({ limit: 1000, daysLimit });
+        
         if (error) return `Error fetching coverage stats: ${error}`;
         if (!articles || articles.length === 0) {
-          return "No active articles in the database to compile country coverage statistics.";
+          return `No active articles in the database for the selected ${daysLimit}-day window.`;
         }
         
         const counts = {};
@@ -94,17 +140,17 @@ async function runAgent(userMessage) {
         
         const sorted = Object.entries(counts)
           .sort((a, b) => b[1] - a[1])
-          .map(([region, count]) => ` - ${region}: ${count} article(s)`)
+          .map(([region, count]) => ` - ${region}: ${count} article(s) (${Math.round((count/articles.length)*100)}%)`)
           .join('\n');
           
-        return `Breakdown of investment news coverage counts by country/region:\n${sorted}`;
+        return `Breakdown of investment news coverage counts by country/region of origin (${daysLimit}-day window):\n${sorted}`;
       } catch (err) {
-        return `Error compiling country coverage stats: ${err.message}`;
+        return `Error compiling country coverage stats: ${err.message}. Input was: ${jsonInput}`;
       }
     }
   });
 
-  const tools = [getClimateScoreTool, searchNewsTool, getCoverageByCountryTool];
+  const tools = [getClimateScoreTool, queryDatabaseTool, getCoverageByCountryTool];
 
   // 3. Define Prompt Structure (matches LangChain expectations)
   const prompt = ChatPromptTemplate.fromMessages([

@@ -16,19 +16,20 @@ const TABLE = 'news_articles';
  * it first enters our database, then naturally expires from the frontend.
  * Optionally filter by sentiment or search keyword.
  */
-async function getArticles({ sentiment, search, region, magnitude, limit = 500 } = {}) {
+async function getArticles({ sentiment, search, region, magnitude, limit = 500, daysLimit = 7 } = {}) {
   if (!supabase) return { data: [], error: 'Database not configured' };
-
-  // 7-day retention window anchored to ingestion time
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   let query = supabase
     .from(TABLE)
     .select('*')
-    .gte('created_at', sevenDaysAgo)
     .neq('impact_score', 0)
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  if (daysLimit) {
+    const cutoffDate = new Date(Date.now() - daysLimit * 24 * 60 * 60 * 1000).toISOString();
+    query = query.gte('created_at', cutoffDate);
+  }
 
   // Multi-sentiment filter: accepts comma-separated values like "critical,growth"
   if (sentiment) {
