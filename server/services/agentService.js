@@ -8,29 +8,36 @@ const models = require('../models');
 const { generateExecutiveSummary } = require('./aiValidator');
 
 // Helper to get a valid Groq API key from rotation
-function getGroqApiKey() {
+// Helper to get all available valid Groq API keys
+function getGroqApiKeys() {
   const keys = [];
   if (process.env.GROQ_API_KEY_1) keys.push(process.env.GROQ_API_KEY_1);
   if (process.env.GROQ_API_KEY_2) keys.push(process.env.GROQ_API_KEY_2);
   if (process.env.GROQ_API_KEY) keys.push(process.env.GROQ_API_KEY);
-  
-  if (keys.length === 0) return null;
-  // Use the first key for the agent chat service
-  return keys[0];
+  return keys;
 }
 
 async function runAgent(userMessage) {
-  const apiKey = getGroqApiKey();
-  if (!apiKey) {
+  const keys = getGroqApiKeys();
+  if (keys.length === 0) {
     throw new Error('Groq API Key is not configured in the environment.');
   }
 
-  // 1. Initialize LangChain ChatGroq model
-  const llm = new ChatGroq({
-    apiKey: apiKey,
+  // 1. Initialize LangChain ChatGroq model with automatic key rotation fallback
+  let llm = new ChatGroq({
+    apiKey: keys[0],
     model: "llama-3.3-70b-versatile",
     temperature: 0.1,
   });
+
+  if (keys.length > 1) {
+    const fallbacks = keys.slice(1).map(k => new ChatGroq({
+      apiKey: k,
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.1,
+    }));
+    llm = llm.withFallbacks(fallbacks);
+  }
 
   // 2. Define Custom Agent Tools
   
@@ -80,7 +87,7 @@ async function runAgent(userMessage) {
         };
         
         if (params.region) {
-          queryParams.region = params.region === 'local' ? 'Bangladesh' : 'global';
+          queryParams.region = params.region; // Pass "local" or "global" directly to match models.getArticles checks
         }
         
         const { data: articles, error } = await models.getArticles(queryParams);
@@ -169,7 +176,14 @@ async function runAgent(userMessage) {
       "national sentiment index, and international press coverage.\n\n" +
       "You have access to tools that fetch live data from the database. Always use these tools " +
       "whenever the user asks about the climate score, current news, trends, or specific topics. " +
-      "Be specific, professional, and base your answers strictly on the facts returned by the tools."
+      "Be specific, professional, and base your answers strictly on the facts returned by the tools.\n\n" +
+      "Query Extraction Guidelines:\n" +
+      "- Map terms like 'positive', 'opportunities', or 'growth' to sentiment='opportunity'.\n" +
+      "- Map terms like 'negative', 'risks', 'danger', or 'threats' to sentiment='risk'.\n" +
+      "- Map terms like 'rules', 'policies', 'taxes', or 'tariffs' to sentiment='regulation'.\n" +
+      "- Map terms like 'domestic', 'local', or 'internal' to region='local'.\n" +
+      "- Map terms like 'foreign', 'international', or 'global' to region='global'.\n" +
+      "- Extract clean, single-word topics for the 'search' query parameter (e.g. 'energy', 'rmg', 'jute') rather than full query sentences."
     ],
     ["human", "{input}"],
     new MessagesPlaceholder("agent_scratchpad"),
