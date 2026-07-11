@@ -55,7 +55,7 @@ async function getArticles({ sentiment, search, region, magnitude, limit = 500, 
   // Magnitude filter is handled in memory below to avoid fragile PostgREST nested 'and' inside 'or' syntax.
 
   if (search) {
-    query = query.or(`title.ilike.%${search}%,snippet.ilike.%${search}%`);
+    query = query.or(`title.ilike.%${search}%,snippet.ilike.%${search}%,ai_rationale.ilike.%${search}%,region.ilike.%${search}%,source.ilike.%${search}%`);
   }
 
   let { data, error } = await query;
