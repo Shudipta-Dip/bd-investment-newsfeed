@@ -1,7 +1,6 @@
 const { ChatGroq } = require("@langchain/groq");
 const { AgentExecutor, createToolCallingAgent } = require("langchain/agents");
 const { DynamicStructuredTool } = require("@langchain/core/tools");
-const { TavilySearchResults } = require("@langchain/community/tools/tavily_search");
 const { z } = require("zod");
 const { ChatPromptTemplate, MessagesPlaceholder } = require("@langchain/core/prompts");
 
@@ -166,27 +165,61 @@ async function runAgent(userMessage) {
     }
   });
 
-  // Tool 4: Tavily Web Search (Fallback-only — used ONLY when DB has no results or user explicitly requests external data)
+  // Tool 4: Custom Tavily Web Search (Zero-dependency REST API fallback)
   let webSearchTool = null;
   if (process.env.TAVILY_API_KEY) {
-    try {
-      webSearchTool = new TavilySearchResults({
-        apiKey: process.env.TAVILY_API_KEY,
-        maxResults: 3,             // Hard cap at 3 results to protect Groq TPM quota
-        includeAnswer: true,       // Return Tavily's pre-synthesized answer snippet
-        includeRawContent: false,  // Exclude full page HTML to keep token counts low
-      });
-      // Override the default description to enforce strict fallback-only usage by the agent
-      webSearchTool.description =
-        "Search the live public web for Bangladesh investment and economic news. " +
-        "IMPORTANT: Use this tool ONLY as a last resort — specifically when: " +
-        "(1) The internal database returned zero results for the user's query, OR " +
-        "(2) The user explicitly asks for live web data or external sources. " +
-        "Always prefer query_investment_database first. " +
-        "When using this tool, always clearly label results as externally sourced.";
-    } catch (err) {
-      console.warn(`[Agent] Tavily tool failed to initialize: ${err.message}. Web search will be disabled.`);
-    }
+    webSearchTool = new DynamicStructuredTool({
+      name: "tavily_search_results",
+      description: "Search the live public web for news about Bangladesh economics and investments. " +
+                   "IMPORTANT: Use this tool ONLY as a last resort when: " +
+                   "(1) The internal database returned zero matching articles, or " +
+                   "(2) The user explicitly asks for live web search or external internet sources. " +
+                   "Always prefer query_investment_database first. " +
+                   "You must always copy the returned URLs exactly and use them for references.",
+      schema: z.object({
+        query: z.string().describe("The clean search query to run on the web")
+      }),
+      func: async ({ query }) => {
+        try {
+          console.log(`[Tavily Search] Querying: "${query}"`);
+          const response = await fetch("https://api.tavily.com/search", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              api_key: process.env.TAVILY_API_KEY,
+              query: query,
+              search_depth: "basic",
+              max_results: 3
+            })
+          });
+
+          if (!response.ok) {
+            const errorMsg = await response.text();
+            throw new Error(`API returned status ${response.status}: ${errorMsg}`);
+          }
+
+          const data = await response.json();
+          if (!data.results || data.results.length === 0) {
+            return `No web search results found for query: "${query}"`;
+          }
+
+          console.log(`[Tavily Search] Successfully retrieved ${data.results.length} results.`);
+          const formatted = data.results.map((r, i) => {
+            return `Article ${i+1}:\n` +
+                   `- Title: ${r.title}\n` +
+                   `- URL: ${r.url}\n` +
+                   `- Snippet: ${r.content}\n`;
+          }).join("\n");
+
+          return `Here are the active web search results for "${query}":\n\n${formatted}`;
+        } catch (err) {
+          console.error("[Tavily Search Tool Error]:", err.message);
+          return `Error running web search: ${err.message}`;
+        }
+      }
+    });
   }
 
   const tools = webSearchTool
@@ -222,8 +255,9 @@ async function runAgent(userMessage) {
     ? "TOOL PRIORITY (CRITICAL - follow this order strictly):\n" +
       "1. ALWAYS call query_investment_database FIRST for any investment/news query.\n" +
       "2. ONLY use tavily_search_results if: the database returned zero matching articles, OR the user explicitly uses words like 'web', 'search online', 'external sources', or 'live internet'.\n" +
-      "3. When presenting Tavily web results, you MUST clearly label them with a prefix: '⚠️ External Source (not in BIDA database):'. You MUST always hyperlink the source using the EXACT full URL returned by the search tool (e.g. '[Bloomberg: Bangladesh Budget Focuses on Growth](https://www.bloomberg.com/news/articles/2026-07-08/bangladesh-budget-growth)'). NEVER link to root domains (like 'https://bloomberg.com' or 'https://reuters.com'). Link directly to the specific article. If a fact lacks a specific URL from the tool output, do not state it.\n" +
-      "4. Never mix internal database results and web results in the same bullet list without clearly separating them with section headers.\n\n"
+      "3. When presenting Tavily web results, you MUST clearly label them with a prefix: '⚠️ External Source (not in BIDA database):'.\n" +
+      "4. LINK SANITY & GROUNDING: You are STRICTLY FORBIDDEN from guessing, shortening, modifying, or fabricating URLs. Every URL in your output MUST be a exact, character-for-character copy-paste of a 'URL:' value returned directly inside the 'tavily_search_results' tool text. If you did not receive a specific URL for a source in the tool response, do NOT include a link for it. Link directly to the article (e.g. '[title](exact_url)'), never to root homepages.\n" +
+      "5. Never mix internal database results and web results in the same bullet list without clearly separating them with section headers.\n\n"
     : "WEB SEARCH STATUS: DISABLED.\n" +
       "You do NOT have access to any web search tool. You can ONLY use the internal BIDA database tools.\n" +
       "If a user asks you to 'search the web', 'look online', or 'find external sources', you MUST respond: 'Web search is not currently enabled. I can only search our internal verified database. Would you like me to search our database instead?'\n" +
