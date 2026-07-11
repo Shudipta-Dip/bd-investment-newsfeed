@@ -69,7 +69,7 @@ export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
   return (
     <div className="space-y-6">
       {/* Executive Climate Brief */}
-      <div className="bg-card p-6 lg:py-2 lg:px-8 rounded-lg border border-border shadow-card overflow-hidden">
+      <div className="bg-card p-6 lg:py-[2px] lg:px-8 rounded-lg border border-border shadow-card overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-stretch justify-between gap-6 min-h-[220px]">
           {/* Left side: Text content (vertically centered) */}
           <div className="flex-1 max-w-xl xl:max-w-2xl py-4 flex flex-col justify-center">
@@ -147,8 +147,8 @@ export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
 
           {/* Right side: Animated Globe (desktop only, centered in the remaining blank space, snug height fit) */}
           {regions.length > 0 && (
-            <div className="hidden lg:flex items-center justify-center flex-1 self-stretch py-2 min-w-[240px] max-w-[320px]">
-              <GlobePulse regions={regions} className="w-full h-full aspect-square max-h-[280px] max-w-[280px]" speed={0.0025} />
+            <div className="hidden lg:flex items-center justify-center flex-1 self-stretch py-0 min-w-[240px] max-w-[320px]">
+              <GlobePulse regions={regions} className="w-full h-full aspect-square max-h-[320px] max-w-[320px]" speed={0.0025} />
             </div>
           )}
         </div>
