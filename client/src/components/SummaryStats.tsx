@@ -69,10 +69,10 @@ export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
   return (
     <div className="space-y-6">
       {/* Executive Climate Brief */}
-      <div className="bg-card p-6 rounded-lg border border-border shadow-card">
-        <div className="flex items-start gap-4">
+      <div className="bg-card p-6 rounded-lg border border-border shadow-card overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Left side: Text content */}
-          <div className="flex-1">
+          <div className="flex-1 max-w-xl xl:max-w-2xl">
             <div className="flex items-center gap-2 mb-3">
               <Brain className="w-4 h-4 text-primary" strokeWidth={2} />
               <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
@@ -145,10 +145,10 @@ export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
             )}
           </div>
 
-          {/* Right side: Animated Globe (desktop only) */}
+          {/* Right side: Animated Globe (desktop only, centered in the remaining blank space) */}
           {regions.length > 0 && (
-            <div className="hidden lg:block w-48 xl:w-56 flex-shrink-0">
-              <GlobePulse regions={regions} speed={0.002} />
+            <div className="hidden lg:flex items-center justify-center flex-1 self-stretch">
+              <GlobePulse regions={regions} className="w-[250px] h-[250px] xl:w-[290px] xl:h-[290px]" speed={0.0025} />
             </div>
           )}
         </div>

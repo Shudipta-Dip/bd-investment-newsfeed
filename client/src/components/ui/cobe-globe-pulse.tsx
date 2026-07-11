@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useMemo } from "react"
 import createGlobe from "cobe"
+import { useTheme } from "@/components/ThemeProvider"
 
 // Map of country/region names to [lat, lng] coordinates
 const COUNTRY_COORDS: Record<string, [number, number]> = {
@@ -93,6 +94,32 @@ export function GlobePulse({
   const thetaOffsetRef = useRef(0)
   const isPausedRef = useRef(false)
 
+  const { theme } = useTheme()
+  const isDarkMode = useMemo(() => {
+    if (theme === "system") {
+      return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
+    }
+    return theme === "dark"
+  }, [theme])
+
+  const globeColors = useMemo(() => {
+    if (isDarkMode) {
+      return {
+        dark: 1,
+        baseColor: [0.15, 0.15, 0.2] as [number, number, number],
+        glowColor: [0.03, 0.03, 0.05] as [number, number, number],
+        markerColor: [0.2, 0.8, 0.6] as [number, number, number], // Emerald/mint green
+      }
+    } else {
+      return {
+        dark: 0,
+        baseColor: [0.85, 0.85, 0.9] as [number, number, number],  // Light grayish blue
+        glowColor: [0.95, 0.95, 0.98] as [number, number, number], // Clean white glow
+        markerColor: [0.05, 0.6, 0.4] as [number, number, number], // Strong forest green
+      }
+    }
+  }, [isDarkMode])
+
   // Convert unique region names to PulseMarker objects with lat/lng
   const markers: PulseMarker[] = useMemo(() => {
     const uniqueRegions = [...new Set(regions)];
@@ -157,13 +184,13 @@ export function GlobePulse({
         height: width,
         phi: phi,
         theta: 0.15,
-        dark: 1,
+        dark: globeColors.dark,
         diffuse: 1.5,
         mapSamples: 16000,
         mapBrightness: 10,
-        baseColor: [0.3, 0.3, 0.35],
-        markerColor: [0.2, 0.8, 0.6],       // Emerald green to match dashboard theme
-        glowColor: [0.03, 0.03, 0.05],
+        baseColor: globeColors.baseColor,
+        markerColor: globeColors.markerColor,
+        glowColor: globeColors.glowColor,
         markerElevation: 0,
         markers: markers.map((m) => ({
           location: m.location,
@@ -197,7 +224,7 @@ export function GlobePulse({
     return () => {
       if (globe) globe.destroy()
     }
-  }, [markers, speed])
+  }, [markers, speed, globeColors])
 
   if (markers.length === 0) return null
 
