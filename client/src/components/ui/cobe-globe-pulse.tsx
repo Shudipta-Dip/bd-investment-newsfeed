@@ -184,7 +184,7 @@ export function GlobePulse({
         devicePixelRatio,
         width: size * devicePixelRatio,
         height: size * devicePixelRatio,
-        scale: 1.25,
+        scale: 1.5,
         phi: phi,
         theta: 0.15,
         dark: globeColors.dark,
@@ -222,7 +222,7 @@ export function GlobePulse({
   if (markers.length === 0) return null
 
   return (
-    <div 
+    <div
       className={`relative select-none ${className}`}
       style={{ width: `${size}px`, height: `${size}px` }}
     >
