@@ -53,7 +53,7 @@ async function getArticles({ sentiment, search, region, magnitude, country, limi
   }
 
   if (country) {
-    query = query.eq('region', country);
+    query = query.ilike('region', country);
   }
 
   // Magnitude filter is handled in memory below to avoid fragile PostgREST nested 'and' inside 'or' syntax.
