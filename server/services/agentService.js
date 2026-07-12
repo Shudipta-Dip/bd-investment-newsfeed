@@ -392,93 +392,97 @@ async function runGeminiAgent(userMessage, history) {
   let lastError = null;
 
   for (const apiKey of keys) {
-    try {
-      console.log(`[runGeminiAgent] Attempting Gemini run with key starting with: ${apiKey.slice(0, 8)}...`);
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        systemInstruction: buildSystemPrompt(!!process.env.TAVILY_API_KEY),
-        tools: geminiTools,
-      });
+    // Try stable 1.5 first for reliability, then 2.0 (or vice versa - try 2.0 then 1.5)
+    for (const modelName of ["gemini-2.0-flash", "gemini-1.5-flash"]) {
+      try {
+        console.log(`[runGeminiAgent] Attempting Gemini run. Model: ${modelName}, Key prefix: ${apiKey.slice(0, 8)}...`);
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: buildSystemPrompt(!!process.env.TAVILY_API_KEY),
+          tools: geminiTools,
+        });
 
-      const contents = [];
-      if (history && Array.isArray(history)) {
-        history.forEach(h => {
-          contents.push({
-            role: h.role === "user" ? "user" : "model",
-            parts: [{ text: h.text }]
+        // Initialize chat history context for Gemini (must start empty to avoid mutations)
+        const contents = [];
+        if (history && Array.isArray(history)) {
+          history.forEach(h => {
+            contents.push({
+              role: h.role === "user" ? "user" : "model",
+              parts: [{ text: h.text }]
+            });
           });
+        }
+
+        contents.push({
+          role: "user",
+          parts: [{ text: userMessage }]
         });
-      }
 
-      contents.push({
-        role: "user",
-        parts: [{ text: userMessage }]
-      });
+        let loopCount = 0;
+        const maxLoops = 5;
 
-      let loopCount = 0;
-      const maxLoops = 5;
+        while (loopCount < maxLoops) {
+          loopCount++;
+          console.log(`[Gemini Loop ${loopCount}] Querying Gemini API (${modelName})...`);
 
-      while (loopCount < maxLoops) {
-        loopCount++;
-        console.log(`[Gemini Loop ${loopCount}] Querying Gemini API...`);
+          const result = await model.generateContent({
+            contents,
+            generationConfig: {
+              temperature: 0,
+              maxOutputTokens: 1024,
+            }
+          });
 
-        const result = await model.generateContent({
-          contents,
-          generationConfig: {
-            temperature: 0,
-            maxOutputTokens: 1024,
+          const response = result.response;
+          const candidate = response.candidates?.[0];
+          const functionCalls = candidate?.content?.parts?.filter(p => p.functionCall);
+          const textPart = candidate?.content?.parts?.find(p => p.text);
+
+          if ((!functionCalls || functionCalls.length === 0) && textPart) {
+            return textPart.text;
           }
-        });
 
-        const response = result.response;
-        const candidate = response.candidates?.[0];
-        const functionCalls = candidate?.content?.parts?.filter(p => p.functionCall);
-        const textPart = candidate?.content?.parts?.find(p => p.text);
+          if ((!functionCalls || functionCalls.length === 0) && response.text) {
+            return response.text();
+          }
 
-        if ((!functionCalls || functionCalls.length === 0) && textPart) {
-          return textPart.text;
+          contents.push({
+            role: "model",
+            parts: candidate?.content?.parts || []
+          });
+
+          console.log(`[Gemini Loop ${loopCount}] Invoking ${functionCalls.length} tool(s)...`);
+          const functionResponses = await Promise.all(
+            functionCalls.map(async (call) => {
+              const { name, args } = call.functionCall;
+              console.log(`[Gemini Tool Exec] Running ${name} with args:`, args);
+              const output = await executeTool(name, args);
+              return {
+                functionResponse: {
+                  name,
+                  response: { result: output }
+                }
+              };
+            })
+          );
+
+          contents.push({
+            role: "function",
+            parts: functionResponses
+          });
         }
 
-        if ((!functionCalls || functionCalls.length === 0) && response.text) {
-          return response.text();
-        }
-
-        contents.push({
-          role: "model",
-          parts: candidate?.content?.parts || []
-        });
-
-        console.log(`[Gemini Loop ${loopCount}] Invoking ${functionCalls.length} tool(s)...`);
-        const functionResponses = await Promise.all(
-          functionCalls.map(async (call) => {
-            const { name, args } = call.functionCall;
-            console.log(`[Gemini Tool Exec] Running ${name} with args:`, args);
-            const output = await executeTool(name, args);
-            return {
-              functionResponse: {
-                name,
-                response: { result: output }
-              }
-            };
-          })
-        );
-
-        contents.push({
-          role: "function",
-          parts: functionResponses
-        });
+        throw new Error("Gemini agent exceeded maximum tool iteration loop limit.");
+      } catch (err) {
+        console.error(`[runGeminiAgent] Model ${modelName} failed with key starting with ${apiKey.slice(0, 8)}:`, err.message);
+        lastError = err;
+        // Proceed to next model or next key
       }
-
-      throw new Error("Gemini agent exceeded maximum tool iteration loop limit.");
-    } catch (err) {
-      console.error(`[runGeminiAgent] Key starting with ${apiKey.slice(0, 8)} failed:`, err.message);
-      lastError = err;
-      // Key failed, proceed to loop and try next key in array
     }
   }
 
-  throw lastError || new Error("All Gemini API keys failed.");
+  throw lastError || new Error("All Gemini API keys and models failed.");
 }
 
 // 2. Native Groq (Llama 3.3 70B) ReAct Loop
