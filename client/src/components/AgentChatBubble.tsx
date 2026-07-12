@@ -129,7 +129,7 @@ export const AgentChatBubble = () => {
                 <h4 className="text-sm font-semibold tracking-wide">BIDA AI Assistant</h4>
                 <div className="flex items-center gap-1 mt-0.5">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-[10px] text-primary-foreground/75 font-mono uppercase">LangChain Agent Online</span>
+                  <span className="text-[10px] text-primary-foreground/75 font-mono uppercase">BIDA Agent Online</span>
                 </div>
               </div>
             </div>
