@@ -26,9 +26,9 @@ const geminiTools = [
         parameters: {
           type: "OBJECT",
           properties: {
-            sentiment: { type: "STRING", enum: ["opportunity", "risk", "regulation"], description: "Filter by sentiment category" },
+            sentiment: { type: "STRING", enum: ["opportunity", "risk", "regulation", ""], description: "Filter by sentiment category" },
             search: { type: "STRING", description: "Keyword search query term" },
-            region: { type: "STRING", enum: ["local", "global"], description: "Filter by region: local = Bangladesh only, global = international only" },
+            region: { type: "STRING", enum: ["local", "global", ""], description: "Filter by region: local = Bangladesh only, global = international only" },
             country: { type: "STRING", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
             min_impact: { type: "NUMBER", description: "Filter by minimum impact score (0-100)" },
             max_impact: { type: "NUMBER", description: "Filter by maximum impact score (0-100)" },
@@ -88,9 +88,9 @@ const groqTools = [
       parameters: {
         type: "object",
         properties: {
-          sentiment: { type: "string", enum: ["opportunity", "risk", "regulation"], description: "Filter by sentiment category" },
+          sentiment: { type: "string", enum: ["opportunity", "risk", "regulation", ""], description: "Filter by sentiment category" },
           search: { type: "string", description: "Keyword search query term" },
-          region: { type: "string", enum: ["local", "global"], description: "Filter by region: local = Bangladesh only, global = international only" },
+          region: { type: "string", enum: ["local", "global", ""], description: "Filter by region: local = Bangladesh only, global = international only" },
           country: { type: "string", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
           min_impact: { type: "number", description: "Filter by minimum impact score (0-100)" },
           max_impact: { type: "number", description: "Filter by maximum impact score (0-100)" },
@@ -160,14 +160,14 @@ async function executeTool(name, args) {
         const searchArchive = args.include_archived !== false;
 
         const queryParams = {
-          sentiment: args.sentiment,
-          search: args.search,
           limit: limit,
           daysLimit: searchArchive ? 60 : 7,
         };
 
-        if (args.region) queryParams.region = args.region;
-        if (args.country) queryParams.country = args.country;
+        if (args.sentiment && args.sentiment !== "") queryParams.sentiment = args.sentiment;
+        if (args.search && args.search !== "") queryParams.search = args.search;
+        if (args.region && args.region !== "") queryParams.region = args.region;
+        if (args.country && args.country !== "") queryParams.country = args.country;
 
         const { data: articles, error } = await models.getArticles(queryParams);
         if (error) return `Error fetching articles: ${error}`;
