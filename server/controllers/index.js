@@ -42,13 +42,28 @@ const healthCheck = async (_req, res) => {
     const testKey = process.env.GEMINI_API_KEY_1 || process.env.GEMINI_API_KEY_4;
     if (testKey) {
       const genAI = new GoogleGenerativeAI(testKey);
-      const result = await genAI.listModels();
-      if (result && result.models) {
-        modelList = result.models.map(m => m.name);
+      const testModels = [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash-8b",
+        "gemini-1.5-pro",
+        "gemini-1.0-pro"
+      ];
+      for (const modelName of testModels) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent("say ok");
+          if (result && result.response) {
+            modelList.push(`${modelName}: SUCCESS`);
+          }
+        } catch (e) {
+          modelList.push(`${modelName}: FAILED (${e.message.split('\n')[0]})`);
+        }
       }
     }
   } catch (modelErr) {
-    modelList = ["Error listing models: " + modelErr.message];
+    modelList = ["Error running diagnostics: " + modelErr.message];
   }
 
   res.json({
