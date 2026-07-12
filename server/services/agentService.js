@@ -561,17 +561,27 @@ async function runGroqAgent(userMessage, history) {
 // Main Integrated Agent Runner (Primary Gemini, Fallback Groq)
 // ---------------------------------------------------------------------------
 async function runAgent(userMessage, history) {
+  let geminiErr = null;
   if (process.env.GEMINI_API_KEY_4) {
     try {
       console.log("[runAgent] Initializing Gemini primary agent...");
       return await runGeminiAgent(userMessage, history);
     } catch (geminiError) {
       console.error("[runAgent] Gemini primary agent failed. Falling back to Groq...", geminiError.message);
+      geminiErr = geminiError;
     }
   }
 
-  console.log("[runAgent] Initializing Groq agent...");
-  return await runGroqAgent(userMessage, history);
+  try {
+    console.log("[runAgent] Initializing Groq agent...");
+    return await runGroqAgent(userMessage, history);
+  } catch (groqError) {
+    console.error("[runAgent] Groq agent failed too:", groqError.message);
+    if (geminiErr) {
+      throw new Error(`Gemini Error: ${geminiErr.message} | Groq Error: ${groqError.message}`);
+    }
+    throw groqError;
+  }
 }
 
 module.exports = { runAgent };
