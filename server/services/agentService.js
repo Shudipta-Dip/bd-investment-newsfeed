@@ -1,64 +1,148 @@
-const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
-const { ChatGroq } = require("@langchain/groq");
-const { AgentExecutor, createToolCallingAgent } = require("langchain/agents");
-const { DynamicStructuredTool } = require("@langchain/core/tools");
-const { z } = require("zod");
-const { ChatPromptTemplate, MessagesPlaceholder } = require("@langchain/core/prompts");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Groq = require("groq-sdk");
 
 const models = require('../models');
 const { generateExecutiveSummary } = require('./aiValidator');
 
 // ---------------------------------------------------------------------------
-// LLM Initialization — Gemini 1.5 Flash primary (GEMINI_API_KEY_4), Groq fallback
-// ---------------------------------------------------------------------------
-function buildLLM() {
-  const llmOptions = [];
-
-  // Primary: Gemini 1.5 Flash (highly optimized, fast, and native tool-calling support)
-  if (process.env.GEMINI_API_KEY_4) {
-    llmOptions.push(new ChatGoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY_4,
-      model: "gemini-1.5-flash",
-      temperature: 0,
-      maxOutputTokens: 1024,
-    }));
-  }
-
-  // Fallback: Groq keys (Llama 3.3 70B)
-  const groqKeys = [
-    process.env.GROQ_API_KEY_1,
-    process.env.GROQ_API_KEY_2,
-    process.env.GROQ_API_KEY,
-  ].filter(Boolean);
-
-  for (const key of groqKeys) {
-    llmOptions.push(new ChatGroq({
-      apiKey: key,
-      model: "llama-3.3-70b-versatile",
-      temperature: 0,
-      maxTokens: 1024,
-    }));
-  }
-
-  if (llmOptions.length === 0) {
-    throw new Error('No LLM API keys configured. Set GEMINI_API_KEY_4 or GROQ_API_KEY_* in environment.');
-  }
-
-  if (llmOptions.length === 1) return llmOptions[0];
-  return llmOptions[0].withFallbacks(llmOptions.slice(1));
-}
-
-// ---------------------------------------------------------------------------
-// Agent Tools
+// Native Tool Declarations (Schemas for Gemini and Groq)
 // ---------------------------------------------------------------------------
 
-// Tool 1: Get current climate score
-function buildClimateScoreTool() {
-  return new DynamicStructuredTool({
-    name: "get_current_climate_score",
-    description: "Get the current Bangladesh investment climate index score (0-100) and the accompanying AI narrative summary.",
-    schema: z.object({}),
-    func: async () => {
+// 1. Gemini tools format (Google Generative AI FunctionDeclarations)
+const geminiTools = [
+  {
+    functionDeclarations: [
+      {
+        name: "get_current_climate_score",
+        description: "Get the current Bangladesh investment climate index score (0-100) and the accompanying AI narrative summary.",
+        parameters: {
+          type: "OBJECT",
+          properties: {},
+        }
+      },
+      {
+        name: "query_investment_database",
+        description: "Query the BIDA internal database of scraped investment articles using specific filters. By default, this searches the 60-day archive to make sure all news are fetched.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            sentiment: { type: "STRING", enum: ["opportunity", "risk", "regulation"], description: "Filter by sentiment category" },
+            search: { type: "STRING", description: "Keyword search query term" },
+            region: { type: "STRING", enum: ["local", "global"], description: "Filter by region: local = Bangladesh only, global = international only" },
+            country: { type: "STRING", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
+            min_impact: { type: "NUMBER", description: "Filter by minimum impact score (0-100)" },
+            max_impact: { type: "NUMBER", description: "Filter by maximum impact score (0-100)" },
+            limit: { type: "NUMBER", description: "Max number of articles to return (default 20, max limit 50)" },
+            include_archived: { type: "BOOLEAN", description: "Defaults to true to search 60 days. Set to false to restrict search to only the last 7 days." }
+          }
+        }
+      },
+      {
+        name: "get_coverage_by_country",
+        description: "Get a statistical breakdown of which countries or regions are publishing investment news in our database.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            include_archived: { type: "BOOLEAN", description: "Set to true to search the 60-day historical archive instead of the default 7-day dashboard window" }
+          }
+        }
+      },
+      {
+        name: "get_database_stats",
+        description: "Get quick summary counts of all active articles currently in the database (total, opportunities, risks, regulations) for the last 7 days.",
+        parameters: {
+          type: "OBJECT",
+          properties: {},
+        }
+      },
+      ...(process.env.TAVILY_API_KEY ? [{
+        name: "tavily_search_results",
+        description: "Search the live public web for news about Bangladesh economics and investments. Use ONLY as a last resort when database returns 0 articles or user asks for external/web search.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            query: { type: "STRING", description: "The clean search query to run on the web" }
+          },
+          required: ["query"]
+        }
+      }] : [])
+    ]
+  }
+];
+
+// 2. Groq tools format (Chat Completion Tools)
+const groqTools = [
+  {
+    type: "function",
+    function: {
+      name: "get_current_climate_score",
+      description: "Get the current Bangladesh investment climate index score (0-100) and the accompanying AI narrative summary.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "query_investment_database",
+      description: "Query the BIDA internal database of scraped investment articles using specific filters. By default, this searches the 60-day archive to make sure all news are fetched.",
+      parameters: {
+        type: "object",
+        properties: {
+          sentiment: { type: "string", enum: ["opportunity", "risk", "regulation"], description: "Filter by sentiment category" },
+          search: { type: "string", description: "Keyword search query term" },
+          region: { type: "string", enum: ["local", "global"], description: "Filter by region: local = Bangladesh only, global = international only" },
+          country: { type: "string", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
+          min_impact: { type: "number", description: "Filter by minimum impact score (0-100)" },
+          max_impact: { type: "number", description: "Filter by maximum impact score (0-100)" },
+          limit: { type: "number", description: "Max number of articles to return (default 20, max limit 50)" },
+          include_archived: { type: "boolean", description: "Defaults to true to search 60 days. Set to false to restrict search to only the last 7 days." }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_coverage_by_country",
+      description: "Get a statistical breakdown of which countries or regions are publishing investment news in our database.",
+      parameters: {
+        type: "object",
+        properties: {
+          include_archived: { type: "boolean", description: "Set to true to search the 60-day historical archive instead of the default 7-day dashboard window" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_database_stats",
+      description: "Get quick summary counts of all active articles currently in the database (total, opportunities, risks, regulations) for the last 7 days.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  ...(process.env.TAVILY_API_KEY ? [{
+    type: "function",
+    function: {
+      name: "tavily_search_results",
+      description: "Search the live public web for news about Bangladesh economics and investments. Use ONLY as a last resort when database returns 0 articles or user asks for external/web search.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The clean search query to run on the web" }
+        },
+        required: ["query"]
+      }
+    }
+  }] : [])
+];
+
+// ---------------------------------------------------------------------------
+// Tool Execution Engine
+// ---------------------------------------------------------------------------
+async function executeTool(name, args) {
+  switch (name) {
+    case "get_current_climate_score": {
       try {
         const { data: articles, error } = await models.getArticles({ limit: 500 });
         if (error || !articles || articles.length === 0) {
@@ -70,67 +154,39 @@ function buildClimateScoreTool() {
         return `Error fetching climate score: ${err.message}`;
       }
     }
-  });
-}
-
-// Tool 2: Advanced Database Query Tool
-function buildQueryDatabaseTool() {
-  return new DynamicStructuredTool({
-    name: "query_investment_database",
-    description:
-      "Query the BIDA internal database of scraped investment articles using specific filters. " +
-      "By default, this searches the 60-day archive to make sure all news are fetched. " +
-      "IMPORTANT: The output of this tool is VERIFIED factual data from the database. " +
-      "You MUST reproduce all names, metrics, and actions exactly as returned.",
-    schema: z.object({
-      sentiment: z.enum(["opportunity", "risk", "regulation"]).optional().describe("Filter by sentiment category"),
-      search: z.string().optional().describe("Keyword search query term"),
-      region: z.enum(["local", "global"]).optional().describe("Filter by region: local = Bangladesh only, global = international only"),
-      country: z.string().optional().describe("Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')"),
-      min_impact: z.number().optional().describe("Filter by minimum impact score (0-100)"),
-      max_impact: z.number().optional().describe("Filter by maximum impact score (0-100)"),
-      limit: z.number().optional().describe("Max number of articles to return (default 20, max limit 50)"),
-      include_archived: z.boolean().optional().describe("Defaults to true to search 60 days. Set to false to restrict search to only the last 7 days.")
-    }),
-    func: async (params) => {
+    case "query_investment_database": {
       try {
-        const limit = Math.min(params.limit || 20, 50);
-        const searchArchive = params.include_archived !== false;
+        const limit = Math.min(args.limit || 20, 50);
+        const searchArchive = args.include_archived !== false;
 
         const queryParams = {
-          sentiment: params.sentiment,
-          search: params.search,
+          sentiment: args.sentiment,
+          search: args.search,
           limit: limit,
           daysLimit: searchArchive ? 60 : 7,
         };
 
-        if (params.region) {
-          queryParams.region = params.region;
-        }
-
-        if (params.country) {
-          queryParams.country = params.country;
-        }
+        if (args.region) queryParams.region = args.region;
+        if (args.country) queryParams.country = args.country;
 
         const { data: articles, error } = await models.getArticles(queryParams);
         if (error) return `Error fetching articles: ${error}`;
         if (!articles || articles.length === 0) {
-          return `No articles found matching filters: ${JSON.stringify(params)}`;
+          return `No articles found matching filters: ${JSON.stringify(args)}`;
         }
 
         let filtered = articles;
-        if (typeof params.min_impact === 'number') {
-          filtered = filtered.filter(a => (a.impact_score || 0) >= params.min_impact);
+        if (typeof args.min_impact === 'number') {
+          filtered = filtered.filter(a => (a.impact_score || 0) >= args.min_impact);
         }
-        if (typeof params.max_impact === 'number') {
-          filtered = filtered.filter(a => (a.impact_score || 0) <= params.max_impact);
+        if (typeof args.max_impact === 'number') {
+          filtered = filtered.filter(a => (a.impact_score || 0) <= args.max_impact);
         }
 
         if (filtered.length === 0) {
-          return `Articles found in DB, but none matched impact range limits: min_impact=${params.min_impact}, max_impact=${params.max_impact}`;
+          return `Articles found in DB, but none matched impact range limits: min_impact=${args.min_impact}, max_impact=${args.max_impact}`;
         }
 
-        // Always display all fields to keep all data points accessible
         const summary = filtered.map((a, i) => {
           return `${i+1}. [Article ID: ${a.id}] "${a.title}"\n` +
                  `   - Source: ${a.source} | Country: ${a.region || 'Unknown'} | Ingested: ${a.created_at.slice(0, 10)}\n` +
@@ -140,25 +196,15 @@ function buildQueryDatabaseTool() {
                  `   - AI Rationale: "${a.ai_rationale || 'No rationale available'}"`;
         }).join('\n\n');
 
-        return `VERIFIED DATABASE RESULTS (${filtered.length} articles). Present these EXACTLY as shown — do not modify titles or scores:\n\n${summary}`;
+        return `[FACTUAL DATABASE RESULTS - COPY VERBATIM - DO NOT PARAPHRASE OR INVENT]\n` +
+               `Found ${filtered.length} matching articles in the database:\n\n${summary}`;
       } catch (err) {
-        return `Failed to execute query: ${err.message}. Parameters were: ${JSON.stringify(params)}`;
+        return `Failed to execute query: ${err.message}. Parameters were: ${JSON.stringify(args)}`;
       }
     }
-  });
-}
-
-// Tool 3: Get breakdown of news coverage by country/region of origin
-function buildCoverageByCountryTool() {
-  return new DynamicStructuredTool({
-    name: "get_coverage_by_country",
-    description: "Get a statistical breakdown of which countries or regions are publishing investment news in our database.",
-    schema: z.object({
-      include_archived: z.boolean().optional().describe("Set to true to search the 60-day historical archive instead of the default 7-day dashboard window")
-    }),
-    func: async (params) => {
+    case "get_coverage_by_country": {
       try {
-        const daysLimit = params.include_archived ? 60 : 7;
+        const daysLimit = args.include_archived ? 60 : 7;
         const { data: articles, error } = await models.getArticles({ limit: 1000, daysLimit });
 
         if (error) return `Error fetching coverage stats: ${error}`;
@@ -179,19 +225,10 @@ function buildCoverageByCountryTool() {
 
         return `Breakdown of investment news coverage counts by country/region of origin (${daysLimit}-day window):\n${sorted}`;
       } catch (err) {
-        return `Error compiling country coverage stats: ${err.message}. Parameters were: ${JSON.stringify(params)}`;
+        return `Error compiling country coverage stats: ${err.message}. Parameters were: ${JSON.stringify(args)}`;
       }
     }
-  });
-}
-
-// Tool 4: Get database counts (total, opportunity, risk, regulation)
-function buildDatabaseStatsTool() {
-  return new DynamicStructuredTool({
-    name: "get_database_stats",
-    description: "Get quick summary counts of all active articles currently in the database (total, opportunities, risks, regulations) for the last 7 days.",
-    schema: z.object({}),
-    func: async () => {
+    case "get_database_stats": {
       try {
         const { data, error } = await models.getStats();
         if (error) return `Error fetching stats: ${error}`;
@@ -204,27 +241,9 @@ function buildDatabaseStatsTool() {
         return `Error fetching stats: ${err.message}`;
       }
     }
-  });
-}
-
-
-// Tool 6: Tavily Web Search (external sources)
-function buildWebSearchTool() {
-  if (!process.env.TAVILY_API_KEY) return null;
-
-  return new DynamicStructuredTool({
-    name: "tavily_search_results",
-    description:
-      "Search the live public web for news about Bangladesh economics and investments. " +
-      "IMPORTANT: Use this tool ONLY as a last resort when: " +
-      "(1) The internal database returned zero matching articles, or " +
-      "(2) The user explicitly asks for live web search or external internet sources.",
-    schema: z.object({
-      query: z.string().describe("The clean search query to run on the web")
-    }),
-    func: async ({ query }) => {
+    case "tavily_search_results": {
       try {
-        console.log(`[Tavily Search] Querying: "${query}"`);
+        console.log(`[Tavily Search] Querying: "${args.query}"`);
         const response = await fetch("https://api.tavily.com/search", {
           method: "POST",
           headers: {
@@ -232,7 +251,7 @@ function buildWebSearchTool() {
           },
           body: JSON.stringify({
             api_key: process.env.TAVILY_API_KEY,
-            query: query,
+            query: args.query,
             search_depth: "basic",
             max_results: 3
           })
@@ -245,10 +264,9 @@ function buildWebSearchTool() {
 
         const data = await response.json();
         if (!data.results || data.results.length === 0) {
-          return `No web search results found for query: "${query}"`;
+          return `No web search results found for query: "${args.query}"`;
         }
 
-        console.log(`[Tavily Search] Successfully retrieved ${data.results.length} results.`);
         const formatted = data.results.map((r, i) => {
           return `External Result ${i+1}:\n` +
                  `  Title: ${r.title}\n` +
@@ -256,18 +274,19 @@ function buildWebSearchTool() {
                  `  Snippet: ${r.content}\n`;
         }).join("\n");
 
-        return `EXTERNAL WEB RESULTS for "${query}" (not from BIDA database).\n` +
+        return `EXTERNAL WEB RESULTS for "${args.query}" (not from BIDA database).\n` +
                `You MUST label these as "⚠️ External Source" and copy each URL exactly as shown — do NOT modify, shorten, or fabricate any URL:\n\n${formatted}`;
       } catch (err) {
-        console.error("[Tavily Search Tool Error]:", err.message);
         return `Error running web search: ${err.message}`;
       }
     }
-  });
+    default:
+      return `Unknown tool name: ${name}`;
+  }
 }
 
 // ---------------------------------------------------------------------------
-// System Prompt
+// Prompts
 // ---------------------------------------------------------------------------
 function buildSystemPrompt(hasWebSearch) {
   const basePrompt =
@@ -276,8 +295,8 @@ function buildSystemPrompt(hasWebSearch) {
     "national sentiment index, and international press coverage.\n\n" +
 
     "CRITICAL OUTPUT RULES:\n" +
-    "1. You are allowed to output planning thoughts and reasoning steps in your scratchpad while deciding on and executing tools. " +
-    "However, once all tool executions are completed, your FINAL response to the user must contain ONLY the clean, final, synthesized analysis. " +
+    "1. You are allowed to output planning thoughts and reasoning steps internally. " +
+    "However, your FINAL response to the user must contain ONLY the clean, final, synthesized analysis. " +
     "Avoid starting your final response with meta-commentary like 'Based on the tool results...' or 'I queried the database and found...'. " +
     "Present the information directly and cleanly.\n" +
     "2. FORMATTING: When presenting multiple articles, you MUST separate each article with a clear, readable horizontal line (---) or double paragraph break. " +
@@ -329,49 +348,188 @@ function buildSystemPrompt(hasWebSearch) {
 }
 
 // ---------------------------------------------------------------------------
-// Main Agent Runner
+// Native ReAct Loop Executors
 // ---------------------------------------------------------------------------
-async function runAgent(userMessage) {
-  const llm = buildLLM();
 
-  // Build tools
-  const tools = [
-    buildClimateScoreTool(),
-    buildQueryDatabaseTool(),
-    buildCoverageByCountryTool(),
-    buildDatabaseStatsTool(),
+// 1. Native Gemini 1.5 Flash ReAct Loop
+async function runGeminiAgent(userMessage) {
+  if (!process.env.GEMINI_API_KEY_4) {
+    throw new Error("GEMINI_API_KEY_4 is not configured.");
+  }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_4);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: buildSystemPrompt(!!process.env.TAVILY_API_KEY),
+    tools: geminiTools,
+  });
+
+  const contents = [
+    {
+      role: "user",
+      parts: [{ text: userMessage }]
+    }
   ];
 
-  const webSearchTool = buildWebSearchTool();
-  if (webSearchTool) tools.push(webSearchTool);
+  let loopCount = 0;
+  const maxLoops = 5;
 
-  // Build prompt
-  const systemPrompt = buildSystemPrompt(!!webSearchTool);
-  const prompt = ChatPromptTemplate.fromMessages([
-    ["system", systemPrompt],
-    ["human", "{input}"],
-    new MessagesPlaceholder("agent_scratchpad"),
-  ]);
+  while (loopCount < maxLoops) {
+    loopCount++;
+    console.log(`[Gemini Loop ${loopCount}] Querying Gemini API...`);
 
-  // Build agent
-  const agent = await createToolCallingAgent({
-    llm,
-    tools,
-    prompt,
-  });
+    const result = await model.generateContent({
+      contents,
+      generationConfig: {
+        temperature: 0,
+        maxOutputTokens: 1024,
+      }
+    });
 
-  const executor = new AgentExecutor({
-    agent,
-    tools,
-    verbose: process.env.NODE_ENV !== 'production',
-  });
+    const response = result.response;
+    const candidate = response.candidates?.[0];
+    const functionCalls = candidate?.content?.parts?.filter(p => p.functionCall);
+    const textPart = candidate?.content?.parts?.find(p => p.text);
 
-  // Invoke
-  const result = await executor.invoke({
-    input: userMessage,
-  });
+    // If no tool calls, return text response directly
+    if ((!functionCalls || functionCalls.length === 0) && textPart) {
+      return textPart.text;
+    }
 
-  return result.output;
+    if ((!functionCalls || functionCalls.length === 0) && response.text) {
+      return response.text();
+    }
+
+    // Append the assistant's turn with tool calls to message history
+    contents.push({
+      role: "model",
+      parts: candidate?.content?.parts || []
+    });
+
+    // Execute tool calls in parallel
+    console.log(`[Gemini Loop ${loopCount}] Invoking ${functionCalls.length} tool(s)...`);
+    const functionResponses = await Promise.all(
+      functionCalls.map(async (call) => {
+        const { name, args } = call.functionCall;
+        console.log(`[Gemini Tool Exec] Running ${name} with args:`, args);
+        const output = await executeTool(name, args);
+        return {
+          functionResponse: {
+            name,
+            response: { result: output }
+          }
+        };
+      })
+    );
+
+    // Append the tool outputs to the conversation
+    contents.push({
+      role: "function",
+      parts: functionResponses
+    });
+  }
+
+  throw new Error("Gemini agent exceeded maximum tool iteration loop limit.");
+}
+
+// 2. Native Groq (Llama 3.3 70B) ReAct Loop
+async function runGroqAgent(userMessage) {
+  const keys = [
+    process.env.GROQ_API_KEY_1,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY
+  ].filter(Boolean);
+
+  if (keys.length === 0) {
+    throw new Error("No Groq API keys configured.");
+  }
+
+  const groq = new Groq({ apiKey: keys[0] });
+
+  const messages = [
+    {
+      role: "system",
+      content: buildSystemPrompt(!!process.env.TAVILY_API_KEY)
+    },
+    {
+      role: "user",
+      content: userMessage
+    }
+  ];
+
+  let loopCount = 0;
+  const maxLoops = 5;
+
+  while (loopCount < maxLoops) {
+    loopCount++;
+    console.log(`[Groq Loop ${loopCount}] Querying Groq API...`);
+
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages,
+      tools: groqTools,
+      tool_choice: "auto",
+      temperature: 0,
+      max_tokens: 1024,
+    });
+
+    const choice = response.choices?.[0];
+    const message = choice?.message;
+    const toolCalls = message?.tool_calls;
+
+    // If no tool calls, return final response
+    if (!toolCalls || toolCalls.length === 0) {
+      return message?.content || "";
+    }
+
+    // Append model response containing tool calls to history
+    messages.push(message);
+
+    // Execute tool calls in parallel
+    console.log(`[Groq Loop ${loopCount}] Invoking ${toolCalls.length} tool(s)...`);
+    const toolResponses = await Promise.all(
+      toolCalls.map(async (toolCall) => {
+        const { id, function: fn } = toolCall;
+        const name = fn.name;
+        let args = {};
+        try {
+          args = JSON.parse(fn.arguments);
+        } catch (_) {}
+
+        console.log(`[Groq Tool Exec] Running ${name} with args:`, args);
+        const output = await executeTool(name, args);
+
+        return {
+          role: "tool",
+          tool_call_id: id,
+          name: name,
+          content: output
+        };
+      })
+    );
+
+    // Append all tool responses to messages history
+    messages.push(...toolResponses);
+  }
+
+  throw new Error("Groq agent exceeded maximum tool iteration loop limit.");
+}
+
+// ---------------------------------------------------------------------------
+// Main Integrated Agent Runner (Primary Gemini, Fallback Groq)
+// ---------------------------------------------------------------------------
+async function runAgent(userMessage) {
+  if (process.env.GEMINI_API_KEY_4) {
+    try {
+      console.log("[runAgent] Initializing Gemini primary agent...");
+      return await runGeminiAgent(userMessage);
+    } catch (geminiError) {
+      console.error("[runAgent] Gemini primary agent failed. Falling back to Groq...", geminiError.message);
+    }
+  }
+
+  console.log("[runAgent] Initializing Groq agent...");
+  return await runGroqAgent(userMessage);
 }
 
 module.exports = { runAgent };
