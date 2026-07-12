@@ -273,11 +273,11 @@ const unsubscribeAlert = async (req, res) => {
  */
 const chatWithAgent = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, history } = req.body;
     if (!message || message.trim() === '') {
       return res.status(400).json({ success: false, error: 'Message content is required.' });
     }
-    const reply = await runAgent(message);
+    const reply = await runAgent(message, history);
     res.json({ success: true, reply });
   } catch (err) {
     console.error('Agent chat error:', err);

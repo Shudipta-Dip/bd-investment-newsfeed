@@ -368,7 +368,7 @@ function buildSystemPrompt(hasWebSearch) {
 // ---------------------------------------------------------------------------
 
 // 1. Native Gemini 1.5 Flash ReAct Loop
-async function runGeminiAgent(userMessage) {
+async function runGeminiAgent(userMessage, history) {
   if (!process.env.GEMINI_API_KEY_4) {
     throw new Error("GEMINI_API_KEY_4 is not configured.");
   }
@@ -380,12 +380,20 @@ async function runGeminiAgent(userMessage) {
     tools: geminiTools,
   });
 
-  const contents = [
-    {
-      role: "user",
-      parts: [{ text: userMessage }]
-    }
-  ];
+  const contents = [];
+  if (history && Array.isArray(history)) {
+    history.forEach(h => {
+      contents.push({
+        role: h.role === "user" ? "user" : "model",
+        parts: [{ text: h.text }]
+      });
+    });
+  }
+
+  contents.push({
+    role: "user",
+    parts: [{ text: userMessage }]
+  });
 
   let loopCount = 0;
   const maxLoops = 5;
@@ -449,7 +457,7 @@ async function runGeminiAgent(userMessage) {
 }
 
 // 2. Native Groq (Llama 3.3 70B) ReAct Loop
-async function runGroqAgent(userMessage) {
+async function runGroqAgent(userMessage, history) {
   const keys = [
     process.env.GROQ_API_KEY_1,
     process.env.GROQ_API_KEY_2,
@@ -466,12 +474,22 @@ async function runGroqAgent(userMessage) {
     {
       role: "system",
       content: buildSystemPrompt(!!process.env.TAVILY_API_KEY)
-    },
-    {
-      role: "user",
-      content: userMessage
     }
   ];
+
+  if (history && Array.isArray(history)) {
+    history.forEach(h => {
+      messages.push({
+        role: h.role === "user" ? "user" : "assistant",
+        content: h.text
+      });
+    });
+  }
+
+  messages.push({
+    role: "user",
+    content: userMessage
+  });
 
   let loopCount = 0;
   const maxLoops = 5;
@@ -534,18 +552,18 @@ async function runGroqAgent(userMessage) {
 // ---------------------------------------------------------------------------
 // Main Integrated Agent Runner (Primary Gemini, Fallback Groq)
 // ---------------------------------------------------------------------------
-async function runAgent(userMessage) {
+async function runAgent(userMessage, history) {
   if (process.env.GEMINI_API_KEY_4) {
     try {
       console.log("[runAgent] Initializing Gemini primary agent...");
-      return await runGeminiAgent(userMessage);
+      return await runGeminiAgent(userMessage, history);
     } catch (geminiError) {
       console.error("[runAgent] Gemini primary agent failed. Falling back to Groq...", geminiError.message);
     }
   }
 
   console.log("[runAgent] Initializing Groq agent...");
-  return await runGroqAgent(userMessage);
+  return await runGroqAgent(userMessage, history);
 }
 
 module.exports = { runAgent };

@@ -12,12 +12,24 @@ interface Message {
 
 export const AgentChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      sender: "agent",
-      text: "Hello! I am the BIDA Macro-Intelligence Agent. I have live access to our database. Ask me about the current climate score, trends, or ask me to search for recent articles on topics like RMG or FDI.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const cached = sessionStorage.getItem("bida_chat_history");
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (_) {}
+    }
+    return [
+      {
+        sender: "agent",
+        text: "Hello! I am the BIDA Macro-Intelligence Agent. I have live access to our database. Ask me about the current climate score, trends, or ask me to search for recent articles on topics like RMG or FDI.",
+      },
+    ];
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem("bida_chat_history", JSON.stringify(messages));
+  }, [messages]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -67,11 +79,25 @@ export const AgentChatBubble = () => {
 
     const userMessage = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { sender: "user", text: userMessage }]);
+    
+    // Add user message to state
+    const updatedMessages = [...messages, { sender: "user", text: userMessage }] as Message[];
+    setMessages(updatedMessages);
     setLoading(true);
 
     try {
-      const reply = await chatWithAgent(userMessage);
+      // Build history context (last 5 messages, excluding welcome and errors)
+      const welcomeText = "Hello! I am the BIDA Macro-Intelligence Agent. I have live access to our database. Ask me about the current climate score, trends, or ask me to search for recent articles on topics like RMG or FDI.";
+      const historyContext = updatedMessages
+        .filter(m => m.text !== welcomeText && !m.text.startsWith("⚠️ Error:"))
+        .slice(0, -1) // Exclude the new user message we just added (since it is sent as the primary query)
+        .slice(-5) // Take last 5 turns
+        .map(m => ({
+          role: m.sender === "user" ? "user" : "model",
+          text: m.text
+        }));
+
+      const reply = await chatWithAgent(userMessage, historyContext);
       setMessages((prev) => [...prev, { sender: "agent", text: reply }]);
     } catch (err: any) {
       setMessages((prev) => [

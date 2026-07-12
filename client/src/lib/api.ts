@@ -121,11 +121,11 @@ export async function unsubscribeFromAlerts(email: string): Promise<{ success: b
 }
 
 /** Chat with BIDA AI Agent */
-export async function chatWithAgent(message: string): Promise<string> {
+export async function chatWithAgent(message: string, history?: { role: string; text: string }[]): Promise<string> {
   const res = await fetch(`${API_BASE}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, history }),
   });
   const json = await res.json();
   if (!json.success) {
