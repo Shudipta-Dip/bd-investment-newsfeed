@@ -166,8 +166,12 @@ async function executeTool(name, args) {
 
         if (args.sentiment && args.sentiment !== "") queryParams.sentiment = args.sentiment;
         if (args.search && args.search !== "") queryParams.search = args.search;
-        if (args.region && args.region !== "") queryParams.region = args.region;
-        if (args.country && args.country !== "") queryParams.country = args.country;
+        if (args.country && args.country !== "") {
+          queryParams.country = args.country;
+          // Ignore region if a specific country is requested to prevent conflicting filters (e.g. region='local' and country='Cambodia')
+        } else if (args.region && args.region !== "") {
+          queryParams.region = args.region;
+        }
 
         const { data: articles, error } = await models.getArticles(queryParams);
         if (error) return `Error fetching articles: ${error}`;
@@ -324,7 +328,8 @@ function buildSystemPrompt(hasWebSearch) {
     "- Map 'domestic', 'local', 'internal' → region='local'.\n" +
     "- Map 'foreign', 'international', 'global' → region='global'.\n" +
     "- Extract single-noun keywords for the 'search' field.\n" +
-    "- By default, search the 60-day archive (include_archived=true). Set include_archived=false only if user specifies 'last week' or '7 days'.\n\n";
+    "- By default, search the 60-day archive (include_archived=true). Set include_archived=false only if user specifies 'last week' or '7 days'.\n" +
+    "- MUTUALLY EXCLUSIVE FILTERS: If you specify the specific 'country' parameter (e.g. 'Cambodia'), you MUST NOT set the 'region' parameter, as they are mutually exclusive.\n\n";
 
   const webSearchPrompt = hasWebSearch
     ? "TOOL PRIORITY & PARALLEL EXECUTION:\n" +
