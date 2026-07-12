@@ -16,7 +16,7 @@ const TABLE = 'news_articles';
  * it first enters our database, then naturally expires from the frontend.
  * Optionally filter by sentiment or search keyword.
  */
-async function getArticles({ sentiment, search, region, magnitude, limit = 500, daysLimit = 7 } = {}) {
+async function getArticles({ sentiment, search, region, magnitude, country, limit = 500, daysLimit = 7 } = {}) {
   if (!supabase) return { data: [], error: 'Database not configured' };
 
   let query = supabase
@@ -50,6 +50,10 @@ async function getArticles({ sentiment, search, region, magnitude, limit = 500, 
       query = query.neq('region', 'Bangladesh');
     }
     // If it includes both, do nothing (show all)
+  }
+
+  if (country) {
+    query = query.eq('region', country);
   }
 
   // Magnitude filter is handled in memory below to avoid fragile PostgREST nested 'and' inside 'or' syntax.

@@ -86,6 +86,7 @@ function buildQueryDatabaseTool() {
       sentiment: z.enum(["opportunity", "risk", "regulation"]).optional().describe("Filter by sentiment category"),
       search: z.string().optional().describe("Keyword search query term"),
       region: z.enum(["local", "global"]).optional().describe("Filter by region: local = Bangladesh only, global = international only"),
+      country: z.string().optional().describe("Filter by specific origin country name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')"),
       min_impact: z.number().optional().describe("Filter by minimum impact score (0-100)"),
       max_impact: z.number().optional().describe("Filter by maximum impact score (0-100)"),
       limit: z.number().optional().describe("Max number of articles to return (default 20, max limit 50)"),
@@ -104,6 +105,10 @@ function buildQueryDatabaseTool() {
 
         if (params.region) {
           queryParams.region = params.region;
+        }
+
+        if (params.country) {
+          queryParams.country = params.country;
         }
 
         const { data: articles, error } = await models.getArticles(queryParams);
