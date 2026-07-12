@@ -38,7 +38,7 @@ const healthCheck = async (_req, res) => {
 
   res.json({
     status: 'ok',
-    message: 'BD Investment Newsfeed API is running',
+    message: 'BD Investment Newsfeed API is running (v1.1.0 - Gemini Chat Agent)',
     timestamp: new Date().toISOString(),
   });
 };
