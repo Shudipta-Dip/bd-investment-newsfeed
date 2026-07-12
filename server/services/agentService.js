@@ -30,10 +30,10 @@ const geminiTools = [
             search: { type: "STRING", description: "Keyword search query term" },
             region: { type: "STRING", enum: ["local", "global", ""], description: "Filter by region: local = Bangladesh only, global = international only" },
             country: { type: "STRING", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
-            min_impact: { type: "NUMBER", description: "Filter by minimum impact score (0-100)" },
-            max_impact: { type: "NUMBER", description: "Filter by maximum impact score (0-100)" },
-            limit: { type: "NUMBER", description: "Max number of articles to return (default 20, max limit 50)" },
-            include_archived: { type: "BOOLEAN", description: "Defaults to true to search 60 days. Set to false to restrict search to only the last 7 days." }
+            min_impact: { type: "STRING", description: "Filter by minimum impact score (0-100) or empty string" },
+            max_impact: { type: "STRING", description: "Filter by maximum impact score (0-100) or empty string" },
+            limit: { type: "STRING", description: "Max number of articles to return (default '20', max '50')" },
+            include_archived: { type: "STRING", description: "Set to 'true' to search 60 days, 'false' for 7 days (default 'true')" }
           }
         }
       },
@@ -92,10 +92,10 @@ const groqTools = [
           search: { type: "string", description: "Keyword search query term" },
           region: { type: "string", enum: ["local", "global", ""], description: "Filter by region: local = Bangladesh only, global = international only" },
           country: { type: "string", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
-          min_impact: { type: "number", description: "Filter by minimum impact score (0-100)" },
-          max_impact: { type: "number", description: "Filter by maximum impact score (0-100)" },
-          limit: { type: "number", description: "Max number of articles to return (default 20, max limit 50)" },
-          include_archived: { type: "boolean", description: "Defaults to true to search 60 days. Set to false to restrict search to only the last 7 days." }
+          min_impact: { type: "string", description: "Filter by minimum impact score (0-100) or empty string" },
+          max_impact: { type: "string", description: "Filter by maximum impact score (0-100) or empty string" },
+          limit: { type: "string", description: "Max number of articles to return (default '20', max '50')" },
+          include_archived: { type: "string", description: "Set to 'true' to search 60 days, 'false' for 7 days (default 'true')" }
         }
       }
     }
@@ -156,8 +156,13 @@ async function executeTool(name, args) {
     }
     case "query_investment_database": {
       try {
-        const limit = Math.min(args.limit || 20, 50);
-        const searchArchive = args.include_archived !== false;
+        let limit = 20;
+        if (args.limit) {
+          const parsedLimit = parseInt(args.limit, 10);
+          if (!isNaN(parsedLimit)) limit = Math.min(parsedLimit, 50);
+        }
+        
+        const searchArchive = args.include_archived === true || args.include_archived === "true" || args.include_archived === undefined || args.include_archived === "";
 
         const queryParams = {
           limit: limit,
@@ -180,11 +185,17 @@ async function executeTool(name, args) {
         }
 
         let filtered = articles;
-        if (typeof args.min_impact === 'number') {
-          filtered = filtered.filter(a => (a.impact_score || 0) >= args.min_impact);
+        if (args.min_impact && args.min_impact !== "") {
+          const minImpact = parseFloat(args.min_impact);
+          if (!isNaN(minImpact)) {
+            filtered = filtered.filter(a => (a.impact_score || 0) >= minImpact);
+          }
         }
-        if (typeof args.max_impact === 'number') {
-          filtered = filtered.filter(a => (a.impact_score || 0) <= args.max_impact);
+        if (args.max_impact && args.max_impact !== "") {
+          const maxImpact = parseFloat(args.max_impact);
+          if (!isNaN(maxImpact)) {
+            filtered = filtered.filter(a => (a.impact_score || 0) <= maxImpact);
+          }
         }
 
         if (filtered.length === 0) {
