@@ -389,7 +389,7 @@ async function runGeminiAgent(userMessage, history) {
     throw new Error("No Gemini API keys configured.");
   }
 
-  let lastError = null;
+  const errors = [];
 
   for (const apiKey of keys) {
     // Try stable 1.5 first for reliability, then 2.0 (or vice versa - try 2.0 then 1.5)
@@ -476,13 +476,13 @@ async function runGeminiAgent(userMessage, history) {
         throw new Error("Gemini agent exceeded maximum tool iteration loop limit.");
       } catch (err) {
         console.error(`[runGeminiAgent] Model ${modelName} failed with key starting with ${apiKey.slice(0, 8)}:`, err.message);
-        lastError = err;
+        errors.push(`${modelName} on key ${apiKey.slice(0, 8)}...: ${err.message}`);
         // Proceed to next model or next key
       }
     }
   }
 
-  throw lastError || new Error("All Gemini API keys and models failed.");
+  throw new Error(`All Gemini API keys and models failed: ${errors.join(" | ")}`);
 }
 
 // 2. Native Groq (Llama 3.3 70B) ReAct Loop
