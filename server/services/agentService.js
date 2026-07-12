@@ -9,12 +9,22 @@ const models = require('../models');
 const { generateExecutiveSummary } = require('./aiValidator');
 
 // ---------------------------------------------------------------------------
-// LLM Initialization — Groq primary (temperature 0), Gemini fallback
+// LLM Initialization — Gemini 1.5 Flash primary (GEMINI_API_KEY_4), Groq fallback
 // ---------------------------------------------------------------------------
 function buildLLM() {
   const llmOptions = [];
 
-  // Primary: Groq (Llama 3.3 70B) for ultra-fast, unthrottled response times
+  // Primary: Gemini 1.5 Flash (highly optimized, fast, and native tool-calling support)
+  if (process.env.GEMINI_API_KEY_4) {
+    llmOptions.push(new ChatGoogleGenerativeAI({
+      apiKey: process.env.GEMINI_API_KEY_4,
+      model: "gemini-1.5-flash",
+      temperature: 0,
+      maxOutputTokens: 1024,
+    }));
+  }
+
+  // Fallback: Groq keys (Llama 3.3 70B)
   const groqKeys = [
     process.env.GROQ_API_KEY_1,
     process.env.GROQ_API_KEY_2,
@@ -30,18 +40,8 @@ function buildLLM() {
     }));
   }
 
-  // Fallback: Gemini 2.0 Flash (via dedicated chat key)
-  if (process.env.GEMINI_API_KEY_4) {
-    llmOptions.push(new ChatGoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY_4,
-      model: "gemini-2.0-flash",
-      temperature: 0,
-      maxOutputTokens: 1024,
-    }));
-  }
-
   if (llmOptions.length === 0) {
-    throw new Error('No LLM API keys configured. Set GROQ_API_KEY_* or GEMINI_API_KEY_4 in environment.');
+    throw new Error('No LLM API keys configured. Set GEMINI_API_KEY_4 or GROQ_API_KEY_* in environment.');
   }
 
   if (llmOptions.length === 1) return llmOptions[0];
@@ -95,7 +95,6 @@ function buildQueryDatabaseTool() {
     func: async (params) => {
       try {
         const limit = Math.min(params.limit || 20, 50);
-        // Default to true (60 days) to prevent missing older news
         const searchArchive = params.include_archived !== false;
 
         const queryParams = {
@@ -187,7 +186,55 @@ function buildCoverageByCountryTool() {
   });
 }
 
-// Tool 4: Tavily Web Search (external sources)
+// Tool 4: Get database counts (total, opportunity, risk, regulation)
+function buildDatabaseStatsTool() {
+  return new DynamicStructuredTool({
+    name: "get_database_stats",
+    description: "Get quick summary counts of all active articles currently in the database (total, opportunities, risks, regulations) for the last 7 days.",
+    schema: z.object({}),
+    func: async () => {
+      try {
+        const { data, error } = await models.getStats();
+        if (error) return `Error fetching stats: ${error}`;
+        return `Database Stats (last 7 days):\n` +
+               ` - Total Articles: ${data.total}\n` +
+               ` - Opportunities: ${data.opportunity}\n` +
+               ` - Risks: ${data.risk}\n` +
+               ` - Regulations: ${data.regulation}`;
+      } catch (err) {
+        return `Error fetching stats: ${err.message}`;
+      }
+    }
+  });
+}
+
+// Tool 5: Update article action status and notes
+function buildUpdateArticleActionTool() {
+  return new DynamicStructuredTool({
+    name: "update_article_action",
+    description: "Update the action status or action note of a specific article in the database using its ID.",
+    schema: z.object({
+      id: z.string().describe("The exact UUID of the article to update"),
+      action_taken: z.boolean().optional().describe("Set to true if action was taken, false otherwise"),
+      action_note: z.string().optional().describe("A text note describing the action taken or planned")
+    }),
+    func: async (params) => {
+      try {
+        const updates = {};
+        if (params.action_taken !== undefined) updates.action_taken = params.action_taken;
+        if (params.action_note !== undefined) updates.action_note = params.action_note;
+
+        const { data, error } = await models.updateArticle(params.id, updates);
+        if (error) return `Error updating article: ${error.message || error}`;
+        return `Successfully updated article ${params.id}. New status: Action Taken = ${data.action_taken}, Action Note = "${data.action_note || 'None'}"`;
+      } catch (err) {
+        return `Failed to update article: ${err.message}`;
+      }
+    }
+  });
+}
+
+// Tool 6: Tavily Web Search (external sources)
 function buildWebSearchTool() {
   if (!process.env.TAVILY_API_KEY) return null;
 
@@ -255,19 +302,22 @@ function buildSystemPrompt(hasWebSearch) {
     "national sentiment index, and international press coverage.\n\n" +
 
     "CRITICAL OUTPUT RULES:\n" +
-    "1. NEVER output your reasoning, planning, tool-selection logic, or intermediate steps. " +
-    "Start your response directly with the final answer/analysis. " +
-    "Phrases like 'To answer this...', 'Let me query...', 'I will use the following tool...' are STRICTLY FORBIDDEN.\n" +
-    "2. Keep responses concise — maximum 3-4 short paragraphs or a compact bullet list. Do not write lengthy essays.\n" +
-    "3. Use markdown formatting (bold, bullet lists, tables) for readability.\n\n" +
+    "1. You are allowed to output planning thoughts and reasoning steps in your scratchpad while deciding on and executing tools. " +
+    "However, once all tool executions are completed, your FINAL response to the user must contain ONLY the clean, final, synthesized analysis. " +
+    "Avoid starting your final response with meta-commentary like 'Based on the tool results...' or 'I queried the database and found...'. " +
+    "Present the information directly and cleanly.\n" +
+    "2. FORMATTING: When presenting multiple articles, you MUST separate each article with a clear, readable horizontal line (---) or double paragraph break. " +
+    "Do NOT bundle them in consecutive bullet points with the same indent level. Make the visual structure clean and easy to scan.\n" +
+    "3. Keep final responses concise — maximum 3-4 short paragraphs or a cleanly spaced list. Do not write lengthy essays.\n" +
+    "4. Use markdown formatting (bold, bullet lists, tables) for readability.\n\n" +
 
     "DATA FIDELITY & ZERO HALLUCINATION RULES (CRITICAL):\n" +
-    "1. You have access to every data point in the news_articles database through query_investment_database. " +
+    "1. You have access to every data point in the news_articles database through query_investment_database (including Article ID, Country, Sentiment, Impact Score, Action Taken status, Action Notes, URL, Snippet, and AI Rationale). " +
     "Analyze all returned articles regardless of their impact score. Do NOT filter out or ignore articles just because they have a low impact score.\n" +
     "2. Present the returned database values (titles, sources, sentiments, impact scores, actions taken) EXACTLY as they are given by the tool. " +
     "Do NOT paraphrase titles or alter any metrics.\n" +
     "3. NEVER fabricate articles, quotes, or statistics. If no news matches, state it clearly.\n" +
-    "4. URL LINK SANITY: Every URL in your output MUST be a exact, character-for-character copy of a 'URL:' value returned inside the tool responses. " +
+    "4. URL LINK SANITY: Every URL in your output MUST be an exact, character-for-character copy of a 'URL:' value returned inside the tool responses. " +
     "If a URL returned by the web search tool is truncated (ends with '...') or incomplete, do NOT output a link. Instead, output the website domain name as plain text (e.g., phnompenhpost.com) without any hyperlink. Never try to guess, complete, or reconstruct truncated URLs.\n\n" +
 
     "DATABASE SCHEMA CONTEXT:\n" +
@@ -284,12 +334,13 @@ function buildSystemPrompt(hasWebSearch) {
     "- By default, search the 60-day archive (include_archived=true). Set include_archived=false only if user specifies 'last week' or '7 days'.\n\n";
 
   const webSearchPrompt = hasWebSearch
-    ? "TOOL PRIORITY (follow strictly):\n" +
+    ? "TOOL PRIORITY & PARALLEL EXECUTION:\n" +
       "1. ALWAYS call query_investment_database FIRST.\n" +
       "2. ONLY use tavily_search_results if: the database query returned zero articles, OR the user explicitly requests web/external sources.\n" +
-      "3. Label all Tavily results with '⚠️ External Source (not in BIDA database):'.\n" +
-      "4. Copy URLs exactly. NEVER fabricate, shorten, or modify URLs. If truncated, output as plain text.\n" +
-      "5. Separate internal and external results with clear section headers.\n\n"
+      "3. If a request requires both internal and external data, trigger query_investment_database and tavily_search_results in parallel in a single turn to minimize latency.\n" +
+      "4. Label all Tavily results with '⚠️ External Source (not in BIDA database):'.\n" +
+      "5. Copy URLs exactly. NEVER fabricate, shorten, or modify URLs. If truncated, output as plain text.\n" +
+      "6. Separate internal and external results with clear section headers.\n\n"
     : "WEB SEARCH STATUS: DISABLED.\n" +
       "You do NOT have access to web search. If asked, respond: 'Web search is not currently enabled. I can only search our internal verified database.'\n" +
       "Do NOT fabricate web results.\n\n";
@@ -314,6 +365,8 @@ async function runAgent(userMessage) {
     buildClimateScoreTool(),
     buildQueryDatabaseTool(),
     buildCoverageByCountryTool(),
+    buildDatabaseStatsTool(),
+    buildUpdateArticleActionTool(),
   ];
 
   const webSearchTool = buildWebSearchTool();
