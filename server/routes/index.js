@@ -13,7 +13,6 @@ router.get('/health', controllers.healthCheck);
 router.get('/news', controllers.getNews);           // Get all (with filters)
 router.get('/news/:id', controllers.getNewsById);    // Get one by ID
 router.post('/news', controllers.createNews);        // Save a new article
-router.patch('/news/:id', controllers.updateNews);   // Update an article
 
 // ---------------------------------------------------------------------------
 // Dashboard stats & executive summary

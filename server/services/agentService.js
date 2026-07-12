@@ -130,18 +130,17 @@ function buildQueryDatabaseTool() {
           return `Articles found in DB, but none matched impact range limits: min_impact=${params.min_impact}, max_impact=${params.max_impact}`;
         }
 
-        // Always display all fields (including action statuses) to keep all data points accessible
+        // Always display all fields to keep all data points accessible
         const summary = filtered.map((a, i) => {
           return `${i+1}. [Article ID: ${a.id}] "${a.title}"\n` +
                  `   - Source: ${a.source} | Country: ${a.region || 'Unknown'} | Ingested: ${a.created_at.slice(0, 10)}\n` +
                  `   - Sentiment: ${a.sentiment} | Impact Score: ${a.impact_score}/100\n` +
-                 `   - Action Taken: ${a.action_taken ? 'YES' : 'NO'} | Action Note: "${a.action_note || 'None'}"\n` +
                  `   - URL: ${a.url}\n` +
                  `   - Snippet: "${a.snippet || 'No snippet content available'}"\n` +
                  `   - AI Rationale: "${a.ai_rationale || 'No rationale available'}"`;
         }).join('\n\n');
 
-        return `VERIFIED DATABASE RESULTS (${filtered.length} articles). Present these EXACTLY as shown — do not modify titles, scores, or action notes:\n\n${summary}`;
+        return `VERIFIED DATABASE RESULTS (${filtered.length} articles). Present these EXACTLY as shown — do not modify titles or scores:\n\n${summary}`;
       } catch (err) {
         return `Failed to execute query: ${err.message}. Parameters were: ${JSON.stringify(params)}`;
       }
@@ -208,31 +207,6 @@ function buildDatabaseStatsTool() {
   });
 }
 
-// Tool 5: Update article action status and notes
-function buildUpdateArticleActionTool() {
-  return new DynamicStructuredTool({
-    name: "update_article_action",
-    description: "Update the action status or action note of a specific article in the database using its ID.",
-    schema: z.object({
-      id: z.string().describe("The exact UUID of the article to update"),
-      action_taken: z.boolean().optional().describe("Set to true if action was taken, false otherwise"),
-      action_note: z.string().optional().describe("A text note describing the action taken or planned")
-    }),
-    func: async (params) => {
-      try {
-        const updates = {};
-        if (params.action_taken !== undefined) updates.action_taken = params.action_taken;
-        if (params.action_note !== undefined) updates.action_note = params.action_note;
-
-        const { data, error } = await models.updateArticle(params.id, updates);
-        if (error) return `Error updating article: ${error.message || error}`;
-        return `Successfully updated article ${params.id}. New status: Action Taken = ${data.action_taken}, Action Note = "${data.action_note || 'None'}"`;
-      } catch (err) {
-        return `Failed to update article: ${err.message}`;
-      }
-    }
-  });
-}
 
 // Tool 6: Tavily Web Search (external sources)
 function buildWebSearchTool() {
@@ -312,9 +286,9 @@ function buildSystemPrompt(hasWebSearch) {
     "4. Use markdown formatting (bold, bullet lists, tables) for readability.\n\n" +
 
     "DATA FIDELITY & ZERO HALLUCINATION RULES (CRITICAL):\n" +
-    "1. You have access to every data point in the news_articles database through query_investment_database (including Article ID, Country, Sentiment, Impact Score, Action Taken status, Action Notes, URL, Snippet, and AI Rationale). " +
+    "1. You have access to every data point in the news_articles database through query_investment_database (including Article ID, Country, Sentiment, Impact Score, URL, Snippet, and AI Rationale). " +
     "Analyze all returned articles regardless of their impact score. Do NOT filter out or ignore articles just because they have a low impact score.\n" +
-    "2. Present the returned database values (titles, sources, sentiments, impact scores, actions taken) EXACTLY as they are given by the tool. " +
+    "2. Present the returned database values (titles, sources, sentiments, impact scores) EXACTLY as they are given by the tool. " +
     "Do NOT paraphrase titles or alter any metrics.\n" +
     "3. NEVER fabricate articles, quotes, or statistics. If no news matches, state it clearly.\n" +
     "4. URL LINK SANITY: Every URL in your output MUST be an exact, character-for-character copy of a 'URL:' value returned inside the tool responses. " +
@@ -366,7 +340,6 @@ async function runAgent(userMessage) {
     buildQueryDatabaseTool(),
     buildCoverageByCountryTool(),
     buildDatabaseStatsTool(),
-    buildUpdateArticleActionTool(),
   ];
 
   const webSearchTool = buildWebSearchTool();

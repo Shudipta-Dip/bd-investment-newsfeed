@@ -397,7 +397,7 @@ let summaryCache = {
 function getArticlesFingerprint(articles) {
   if (!articles || articles.length === 0) return '';
   const sorted = [...articles].sort((a, b) => (a.url || '').localeCompare(b.url || ''));
-  return sorted.map(a => `${a.id || ''}-${a.sentiment || ''}-${a.impact_score || ''}-${a.action_taken ? 't' : 'f'}`).join('|');
+  return sorted.map(a => `${a.id || ''}-${a.sentiment || ''}-${a.impact_score || ''}`).join('|');
 }
 
 /**

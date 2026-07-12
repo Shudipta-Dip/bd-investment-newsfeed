@@ -20,8 +20,6 @@ export type NewsItem = {
   region: string | null;
   ai_rationale: string | null;
   published_at: string;
-  action_taken: boolean;
-  action_note: string | null;
   created_at: string;
 };
 
@@ -76,23 +74,6 @@ export async function fetchStats(): Promise<DashboardStats> {
   return json.data;
 }
 
-/** Mark an article as handled / log an action */
-export async function updateArticle(
-  id: string,
-  updates: { action_taken?: boolean; action_note?: string }
-): Promise<NewsItem> {
-  const res = await fetch(`${API_BASE}/news/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updates),
-  });
-  const json = await res.json();
-  if (!json.success) {
-    const errMsg = json.error?.message || (typeof json.error === "string" ? json.error : null) || "Failed to update article";
-    throw new Error(errMsg);
-  }
-  return json.data;
-}
 
 /** Shape of the executive climate summary */
 export type ExecutiveSummary = {

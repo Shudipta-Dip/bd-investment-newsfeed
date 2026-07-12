@@ -49,8 +49,6 @@ export function toNewsItem(article: ApiNewsItem): NewsItem {
     url: article.url,
     buzzTrend: 0,
     _dbId: article.id,
-    _actionTaken: article.action_taken,
-    _actionNote: article.action_note,
   };
 }
 

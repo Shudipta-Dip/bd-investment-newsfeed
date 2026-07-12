@@ -110,31 +110,6 @@ const createNews = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/news/:id
- * Updates an article (e.g., log that an action was taken).
- */
-const updateNews = async (req, res) => {
-  try {
-    const { action_taken, action_note } = req.body;
-    
-    // Whitelist only action_taken and action_note for updates
-    const updates = {};
-    if (action_taken !== undefined) updates.action_taken = action_taken;
-    if (action_note !== undefined) updates.action_note = action_note;
-
-    const { data, error } = await models.updateArticle(req.params.id, updates);
-
-    if (error) {
-      return res.status(400).json({ success: false, error });
-    }
-
-    res.json({ success: true, data });
-  } catch (err) {
-    console.error('Error updating article:', err);
-    res.status(500).json({ success: false, error: 'Failed to update article' });
-  }
-};
 
 /**
  * GET /api/stats
@@ -315,7 +290,6 @@ module.exports = {
   getNews,
   getNewsById,
   createNews,
-  updateNews,
   getStats,
   scrapeNews,
   getExecutiveSummary,
