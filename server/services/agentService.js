@@ -558,7 +558,8 @@ async function runAgent(userMessage, history) {
       console.log("[runAgent] Initializing Gemini primary agent...");
       return await runGeminiAgent(userMessage, history);
     } catch (geminiError) {
-      console.error("[runAgent] Gemini primary agent failed. Falling back to Groq...", geminiError.message);
+      console.error("[runAgent] Gemini primary agent failed. Rethrowing for debug...", geminiError.message);
+      throw geminiError;
     }
   }
 
