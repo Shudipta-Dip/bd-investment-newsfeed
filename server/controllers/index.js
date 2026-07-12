@@ -36,6 +36,21 @@ const healthCheck = async (_req, res) => {
     }
   })();
 
+  let modelList = [];
+  try {
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const testKey = process.env.GEMINI_API_KEY_1 || process.env.GEMINI_API_KEY_4;
+    if (testKey) {
+      const genAI = new GoogleGenerativeAI(testKey);
+      const result = await genAI.listModels();
+      if (result && result.models) {
+        modelList = result.models.map(m => m.name);
+      }
+    }
+  } catch (modelErr) {
+    modelList = ["Error listing models: " + modelErr.message];
+  }
+
   res.json({
     status: 'ok',
     message: 'BD Investment Newsfeed API is running (v1.1.0 - Gemini Chat Agent)',
@@ -44,7 +59,8 @@ const healthCheck = async (_req, res) => {
       hasGeminiKey4: !!process.env.GEMINI_API_KEY_4,
       hasGroqKey1: !!process.env.GROQ_API_KEY_1,
       hasTavilyKey: !!process.env.TAVILY_API_KEY,
-    }
+    },
+    availableModels: modelList
   });
 };
 
