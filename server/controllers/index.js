@@ -281,7 +281,7 @@ const chatWithAgent = async (req, res) => {
     res.json({ success: true, reply });
   } catch (err) {
     console.error('Agent chat error:', err);
-    res.status(500).json({ success: false, error: err.message || 'Error occurred during agent execution.' });
+    res.status(500).json({ success: false, error: 'The AI assistant is temporarily busy or rate-limited. Please try again in a few moments.' });
   }
 };
 

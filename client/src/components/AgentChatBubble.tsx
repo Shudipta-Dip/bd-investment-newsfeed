@@ -104,7 +104,7 @@ export const AgentChatBubble = () => {
         ...prev,
         {
           sender: "agent",
-          text: `⚠️ Error: ${err.message || "Failed to get a response from the agent. Please try again."}`,
+          text: `⚠️ The AI assistant is temporarily busy or rate-limited. Please try again in a few moments.`,
         },
       ]);
     } finally {
