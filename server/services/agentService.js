@@ -377,91 +377,108 @@ function buildSystemPrompt(hasWebSearch) {
 
 // 1. Native Gemini 2.0 Flash ReAct Loop
 async function runGeminiAgent(userMessage, history) {
-  if (!process.env.GEMINI_API_KEY_4) {
-    throw new Error("GEMINI_API_KEY_4 is not configured.");
+  const keys = [
+    process.env.GEMINI_API_KEY_4,
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+    process.env.GEMINI_API_KEY
+  ].filter(Boolean);
+
+  if (keys.length === 0) {
+    throw new Error("No Gemini API keys configured.");
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_4);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    systemInstruction: buildSystemPrompt(!!process.env.TAVILY_API_KEY),
-    tools: geminiTools,
-  });
+  let lastError = null;
 
-  const contents = [];
-  if (history && Array.isArray(history)) {
-    history.forEach(h => {
-      contents.push({
-        role: h.role === "user" ? "user" : "model",
-        parts: [{ text: h.text }]
+  for (const apiKey of keys) {
+    try {
+      console.log(`[runGeminiAgent] Attempting Gemini run with key starting with: ${apiKey.slice(0, 8)}...`);
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        systemInstruction: buildSystemPrompt(!!process.env.TAVILY_API_KEY),
+        tools: geminiTools,
       });
-    });
-  }
 
-  contents.push({
-    role: "user",
-    parts: [{ text: userMessage }]
-  });
-
-  let loopCount = 0;
-  const maxLoops = 5;
-
-  while (loopCount < maxLoops) {
-    loopCount++;
-    console.log(`[Gemini Loop ${loopCount}] Querying Gemini API...`);
-
-    const result = await model.generateContent({
-      contents,
-      generationConfig: {
-        temperature: 0,
-        maxOutputTokens: 1024,
+      const contents = [];
+      if (history && Array.isArray(history)) {
+        history.forEach(h => {
+          contents.push({
+            role: h.role === "user" ? "user" : "model",
+            parts: [{ text: h.text }]
+          });
+        });
       }
-    });
 
-    const response = result.response;
-    const candidate = response.candidates?.[0];
-    const functionCalls = candidate?.content?.parts?.filter(p => p.functionCall);
-    const textPart = candidate?.content?.parts?.find(p => p.text);
+      contents.push({
+        role: "user",
+        parts: [{ text: userMessage }]
+      });
 
-    // If no tool calls, return text response directly
-    if ((!functionCalls || functionCalls.length === 0) && textPart) {
-      return textPart.text;
-    }
+      let loopCount = 0;
+      const maxLoops = 5;
 
-    if ((!functionCalls || functionCalls.length === 0) && response.text) {
-      return response.text();
-    }
+      while (loopCount < maxLoops) {
+        loopCount++;
+        console.log(`[Gemini Loop ${loopCount}] Querying Gemini API...`);
 
-    // Append the assistant's turn with tool calls to message history
-    contents.push({
-      role: "model",
-      parts: candidate?.content?.parts || []
-    });
-
-    // Execute tool calls in parallel
-    console.log(`[Gemini Loop ${loopCount}] Invoking ${functionCalls.length} tool(s)...`);
-    const functionResponses = await Promise.all(
-      functionCalls.map(async (call) => {
-        const { name, args } = call.functionCall;
-        console.log(`[Gemini Tool Exec] Running ${name} with args:`, args);
-        const output = await executeTool(name, args);
-        return {
-          functionResponse: {
-            name,
-            response: { result: output }
+        const result = await model.generateContent({
+          contents,
+          generationConfig: {
+            temperature: 0,
+            maxOutputTokens: 1024,
           }
-        };
-      })
-    );
+        });
 
-    // Append the tool outputs to the conversation
-    contents.push({
-      role: "function",
-      parts: functionResponses
-    });
+        const response = result.response;
+        const candidate = response.candidates?.[0];
+        const functionCalls = candidate?.content?.parts?.filter(p => p.functionCall);
+        const textPart = candidate?.content?.parts?.find(p => p.text);
+
+        if ((!functionCalls || functionCalls.length === 0) && textPart) {
+          return textPart.text;
+        }
+
+        if ((!functionCalls || functionCalls.length === 0) && response.text) {
+          return response.text();
+        }
+
+        contents.push({
+          role: "model",
+          parts: candidate?.content?.parts || []
+        });
+
+        console.log(`[Gemini Loop ${loopCount}] Invoking ${functionCalls.length} tool(s)...`);
+        const functionResponses = await Promise.all(
+          functionCalls.map(async (call) => {
+            const { name, args } = call.functionCall;
+            console.log(`[Gemini Tool Exec] Running ${name} with args:`, args);
+            const output = await executeTool(name, args);
+            return {
+              functionResponse: {
+                name,
+                response: { result: output }
+              }
+            };
+          })
+        );
+
+        contents.push({
+          role: "function",
+          parts: functionResponses
+        });
+      }
+
+      throw new Error("Gemini agent exceeded maximum tool iteration loop limit.");
+    } catch (err) {
+      console.error(`[runGeminiAgent] Key starting with ${apiKey.slice(0, 8)} failed:`, err.message);
+      lastError = err;
+      // Key failed, proceed to loop and try next key in array
+    }
   }
 
-  throw new Error("Gemini agent exceeded maximum tool iteration loop limit.");
+  throw lastError || new Error("All Gemini API keys failed.");
 }
 
 // 2. Native Groq (Llama 3.3 70B) ReAct Loop
