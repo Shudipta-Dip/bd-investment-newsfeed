@@ -578,12 +578,119 @@ async function runGroqAgent(userMessage, history) {
   throw new Error("Groq agent exceeded maximum tool iteration loop limit.");
 }
 
+// 3. Native DeepSeek chat completions fallback ReAct Loop
+async function runDeepSeekAgent(userMessage, history) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error("No DeepSeek API key configured.");
+  }
+
+  const messages = [
+    {
+      role: "system",
+      content: buildSystemPrompt(!!process.env.TAVILY_API_KEY)
+    }
+  ];
+
+  if (history && Array.isArray(history)) {
+    history.forEach(h => {
+      messages.push({
+        role: h.role === "user" ? "user" : "assistant",
+        content: h.text
+      });
+    });
+  }
+
+  messages.push({
+    role: "user",
+    content: userMessage
+  });
+
+  let loopCount = 0;
+  const maxLoops = 5;
+
+  while (loopCount < maxLoops) {
+    loopCount++;
+    console.log(`[DeepSeek Loop ${loopCount}] Querying DeepSeek API...`);
+
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages,
+        tools: groqTools,
+        tool_choice: "auto",
+        temperature: 0,
+        max_tokens: 1024
+      })
+    });
+
+    if (!response.ok) {
+      const errorMsg = await response.text();
+      throw new Error(`DeepSeek API error (status ${response.status}): ${errorMsg}`);
+    }
+
+    const data = await response.json();
+    const choice = data.choices?.[0];
+    const message = choice?.message;
+    const toolCalls = message?.tool_calls;
+
+    // If no tool calls, return final response
+    if (!toolCalls || toolCalls.length === 0) {
+      return message?.content || "";
+    }
+
+    // Append model response containing tool calls to history
+    messages.push(message);
+
+    // Execute tool calls in parallel
+    console.log(`[DeepSeek Loop ${loopCount}] Invoking ${toolCalls.length} tool(s)...`);
+    const toolResponses = await Promise.all(
+      toolCalls.map(async (toolCall) => {
+        const { id, function: fn } = toolCall;
+        const name = fn.name;
+        let args = {};
+        try {
+          args = JSON.parse(fn.arguments);
+        } catch (_) {}
+
+        console.log(`[DeepSeek Tool Exec] Running ${name} with args:`, args);
+        const output = await executeTool(name, args);
+
+        return {
+          role: "tool",
+          tool_call_id: id,
+          name: name,
+          content: output
+        };
+      })
+    );
+
+    // Append all tool responses to messages history
+    messages.push(...toolResponses);
+  }
+
+  throw new Error("DeepSeek agent exceeded maximum tool iteration loop limit.");
+}
+
 // ---------------------------------------------------------------------------
-// Main Integrated Agent Runner (Primary Gemini, Fallback Groq)
+// Main Integrated Agent Runner (Primary Gemini, Fallback Groq, Fallback DeepSeek)
 // ---------------------------------------------------------------------------
 async function runAgent(userMessage, history) {
   let geminiErr = null;
-  if (process.env.GEMINI_API_KEY_4) {
+  const hasGeminiKeys = [
+    process.env.GEMINI_API_KEY_4,
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+    process.env.GEMINI_API_KEY
+  ].some(Boolean);
+
+  if (hasGeminiKeys) {
     try {
       console.log("[runAgent] Initializing Gemini primary agent...");
       return await runGeminiAgent(userMessage, history);
@@ -593,16 +700,45 @@ async function runAgent(userMessage, history) {
     }
   }
 
-  try {
-    console.log("[runAgent] Initializing Groq agent...");
-    return await runGroqAgent(userMessage, history);
-  } catch (groqError) {
-    console.error("[runAgent] Groq agent failed too:", groqError.message);
-    if (geminiErr) {
-      throw new Error(`Gemini Error: ${geminiErr.message} | Groq Error: ${groqError.message}`);
+  let groqErr = null;
+  const hasGroqKeys = [
+    process.env.GROQ_API_KEY_1,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY
+  ].some(Boolean);
+
+  if (hasGroqKeys) {
+    try {
+      console.log("[runAgent] Initializing Groq agent...");
+      return await runGroqAgent(userMessage, history);
+    } catch (groqError) {
+      console.error("[runAgent] Groq agent failed. Falling back to DeepSeek...", groqError.message);
+      groqErr = groqError;
     }
-    throw groqError;
   }
+
+  if (process.env.DEEPSEEK_API_KEY) {
+    try {
+      console.log("[runAgent] Initializing DeepSeek agent...");
+      return await runDeepSeekAgent(userMessage, history);
+    } catch (deepseekError) {
+      console.error("[runAgent] DeepSeek agent failed too:", deepseekError.message);
+      const parts = [];
+      if (geminiErr) parts.push(`Gemini: ${geminiErr.message}`);
+      if (groqErr) parts.push(`Groq: ${groqErr.message}`);
+      parts.push(`DeepSeek: ${deepseekError.message}`);
+      throw new Error(`All agents failed: ${parts.join(" | ")}`);
+    }
+  }
+
+  // If no DeepSeek API key was configured and we reached here, propagate the earlier errors.
+  const parts = [];
+  if (geminiErr) parts.push(`Gemini: ${geminiErr.message}`);
+  if (groqErr) parts.push(`Groq: ${groqErr.message}`);
+  if (parts.length === 0) {
+    throw new Error("No API keys configured for Gemini, Groq, or DeepSeek agents.");
+  }
+  throw new Error(`All configured agents failed: ${parts.join(" | ")}`);
 }
 
 module.exports = { runAgent };
