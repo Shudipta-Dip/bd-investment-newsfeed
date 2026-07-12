@@ -375,7 +375,7 @@ function buildSystemPrompt(hasWebSearch) {
 // Native ReAct Loop Executors
 // ---------------------------------------------------------------------------
 
-// 1. Native Gemini 1.5 Flash ReAct Loop
+// 1. Native Gemini 2.0 Flash ReAct Loop
 async function runGeminiAgent(userMessage, history) {
   if (!process.env.GEMINI_API_KEY_4) {
     throw new Error("GEMINI_API_KEY_4 is not configured.");
@@ -383,7 +383,7 @@ async function runGeminiAgent(userMessage, history) {
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_4);
   const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     systemInstruction: buildSystemPrompt(!!process.env.TAVILY_API_KEY),
     tools: geminiTools,
   });
