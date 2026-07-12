@@ -36,46 +36,10 @@ const healthCheck = async (_req, res) => {
     }
   })();
 
-  let modelList = [];
-  try {
-    const { GoogleGenerativeAI } = require("@google/generative-ai");
-    const testKey = process.env.GEMINI_API_KEY_1 || process.env.GEMINI_API_KEY_4;
-    if (testKey) {
-      const genAI = new GoogleGenerativeAI(testKey);
-      const testModels = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-flash-8b",
-        "gemini-1.5-pro",
-        "gemini-1.0-pro"
-      ];
-      for (const modelName of testModels) {
-        try {
-          const model = genAI.getGenerativeModel({ model: modelName });
-          const result = await model.generateContent("say ok");
-          if (result && result.response) {
-            modelList.push(`${modelName}: SUCCESS`);
-          }
-        } catch (e) {
-          modelList.push(`${modelName}: FAILED (${e.message.split('\n')[0]})`);
-        }
-      }
-    }
-  } catch (modelErr) {
-    modelList = ["Error running diagnostics: " + modelErr.message];
-  }
-
   res.json({
     status: 'ok',
     message: 'BD Investment Newsfeed API is running (v1.1.0 - Gemini Chat Agent)',
     timestamp: new Date().toISOString(),
-    envKeys: {
-      hasGeminiKey4: !!process.env.GEMINI_API_KEY_4,
-      hasGroqKey1: !!process.env.GROQ_API_KEY_1,
-      hasTavilyKey: !!process.env.TAVILY_API_KEY,
-    },
-    availableModels: modelList
   });
 };
 
