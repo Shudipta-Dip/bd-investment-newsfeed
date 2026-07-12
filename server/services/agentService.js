@@ -26,9 +26,9 @@ const geminiTools = [
         parameters: {
           type: "OBJECT",
           properties: {
-            sentiment: { type: "STRING", enum: ["opportunity", "risk", "regulation", ""], description: "Filter by sentiment category" },
+            sentiment: { type: "STRING", description: "Filter by sentiment category ('opportunity', 'risk', 'regulation'). Omit or leave empty if not filtering." },
             search: { type: "STRING", description: "Keyword search query term" },
-            region: { type: "STRING", enum: ["local", "global", ""], description: "Filter by region: local = Bangladesh only, global = international only" },
+            region: { type: "STRING", description: "Filter by region category ('local', 'global'). Omit or leave empty if not filtering." },
             country: { type: "STRING", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
             min_impact: { type: "STRING", description: "Filter by minimum impact score (0-100) or empty string" },
             max_impact: { type: "STRING", description: "Filter by maximum impact score (0-100) or empty string" },
@@ -88,9 +88,9 @@ const groqTools = [
       parameters: {
         type: "object",
         properties: {
-          sentiment: { type: "string", enum: ["opportunity", "risk", "regulation", ""], description: "Filter by sentiment category" },
+          sentiment: { type: "string", description: "Filter by sentiment category ('opportunity', 'risk', 'regulation'). Omit or leave empty if not filtering." },
           search: { type: "string", description: "Keyword search query term" },
-          region: { type: "string", enum: ["local", "global", ""], description: "Filter by region: local = Bangladesh only, global = international only" },
+          region: { type: "string", description: "Filter by region category ('local', 'global'). Omit or leave empty if not filtering." },
           country: { type: "string", description: "Filter by specific country/region name (e.g. 'Cambodia', 'Sweden', 'New Zealand', 'United States')" },
           min_impact: { type: "string", description: "Filter by minimum impact score (0-100) or empty string" },
           max_impact: { type: "string", description: "Filter by maximum impact score (0-100) or empty string" },
@@ -169,13 +169,21 @@ async function executeTool(name, args) {
           daysLimit: searchArchive ? 60 : 7,
         };
 
-        if (args.sentiment && args.sentiment !== "") queryParams.sentiment = args.sentiment;
+        if (args.sentiment && args.sentiment !== "") {
+          const sentVal = args.sentiment.toLowerCase();
+          if (["opportunity", "risk", "regulation"].includes(sentVal)) {
+            queryParams.sentiment = sentVal;
+          }
+        }
         if (args.search && args.search !== "") queryParams.search = args.search;
         if (args.country && args.country !== "") {
           queryParams.country = args.country;
           // Ignore region if a specific country is requested to prevent conflicting filters (e.g. region='local' and country='Cambodia')
         } else if (args.region && args.region !== "") {
-          queryParams.region = args.region;
+          const regVal = args.region.toLowerCase();
+          if (["local", "global"].includes(regVal)) {
+            queryParams.region = regVal;
+          }
         }
 
         const { data: articles, error } = await models.getArticles(queryParams);
@@ -558,8 +566,7 @@ async function runAgent(userMessage, history) {
       console.log("[runAgent] Initializing Gemini primary agent...");
       return await runGeminiAgent(userMessage, history);
     } catch (geminiError) {
-      console.error("[runAgent] Gemini primary agent failed. Rethrowing for debug...", geminiError.message);
-      throw geminiError;
+      console.error("[runAgent] Gemini primary agent failed. Falling back to Groq...", geminiError.message);
     }
   }
 
