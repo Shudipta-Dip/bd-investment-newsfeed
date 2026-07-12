@@ -40,6 +40,11 @@ const healthCheck = async (_req, res) => {
     status: 'ok',
     message: 'BD Investment Newsfeed API is running (v1.1.0 - Gemini Chat Agent)',
     timestamp: new Date().toISOString(),
+    envKeys: {
+      hasGeminiKey4: !!process.env.GEMINI_API_KEY_4,
+      hasGroqKey1: !!process.env.GROQ_API_KEY_1,
+      hasTavilyKey: !!process.env.TAVILY_API_KEY,
+    }
   });
 };
 
