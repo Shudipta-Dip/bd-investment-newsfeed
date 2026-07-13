@@ -217,7 +217,7 @@ export const AgentChatBubble = () => {
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded px-1.5 py-0.5 mt-0.5 no-underline transition-all"
+                          className="inline-flex items-center gap-1 text-[11px] bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded px-1.5 py-0.5 mt-0.5 no-underline transition-all break-all max-w-full"
                           {...props}
                         >
                           {children}
