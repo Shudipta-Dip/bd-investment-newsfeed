@@ -12,6 +12,7 @@ interface Message {
 
 export const AgentChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"chat" | "pipeline">("chat");
   const [messages, setMessages] = useState<Message[]>(() => {
     const cached = sessionStorage.getItem("bida_chat_history");
     if (cached) {

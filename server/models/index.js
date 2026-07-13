@@ -8,6 +8,85 @@ const supabase = require('../config/database');
 
 const TABLE = 'news_articles';
 
+// Helper functions for in-memory fuzzy and typo-tolerant matching
+function normalizeString(str) {
+  if (!str) return '';
+  return str
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function levenshteinDistance(a, b) {
+  const tmp = [];
+  const alen = a.length;
+  const blen = b.length;
+  if (alen === 0) return blen;
+  if (blen === 0) return alen;
+  for (let i = 0; i <= alen; i++) tmp[i] = [i];
+  for (let j = 0; j <= blen; j++) tmp[0][j] = j;
+  for (let i = 1; i <= alen; i++) {
+    for (let j = 1; j <= blen; j++) {
+      tmp[i][j] = Math.min(
+        tmp[i - 1][j] + 1,
+        tmp[i][j - 1] + 1,
+        tmp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+  }
+  return tmp[alen][blen];
+}
+
+function isFuzzyMatch(target, query) {
+  if (!target || !query) return false;
+  
+  const normTarget = normalizeString(target);
+  const normQuery = normalizeString(query).trim();
+  if (!normQuery) return false;
+  
+  // 1. Direct substring match (handles casing and accents)
+  if (normTarget.includes(normQuery)) return true;
+  
+  // Try matching without spaces to handle "aljazeera" matching "al jazeera"
+  const targetNoSpaces = normTarget.replace(/\s+/g, '');
+  const queryNoSpaces = normQuery.replace(/\s+/g, '');
+  if (targetNoSpaces.includes(queryNoSpaces)) return true;
+  
+  // Helper to get candidate words (individual words + adjacent word pairs)
+  // to allow typo matching across space boundaries.
+  const getCandidates = (str) => {
+    const words = str.split(/\s+/).filter(Boolean);
+    const list = [...words];
+    for (let i = 0; i < words.length - 1; i++) {
+      list.push(words[i] + words[i+1]);
+    }
+    return list.filter(w => w.length > 2);
+  };
+  
+  const targetCandidates = getCandidates(normTarget);
+  const queryWords = normQuery.split(/\s+/).filter(w => w.length > 2);
+  
+  if (queryWords.length === 0) return false;
+  
+  return queryWords.every(qw => {
+    return targetCandidates.some(tw => {
+      // Substring check
+      if (tw.includes(qw) || qw.includes(tw)) return true;
+      
+      // Stemming/prefix check (handles root word variations like regulate vs regulations)
+      if (qw.length >= 5 && tw.length >= 5) {
+        const prefixLen = Math.min(qw.length, tw.length) - 2;
+        if (qw.substring(0, prefixLen) === tw.substring(0, prefixLen)) return true;
+      }
+      
+      // Levenshtein check for typos
+      const maxDistance = qw.length <= 5 ? 1 : 2;
+      return levenshteinDistance(tw, qw) <= maxDistance;
+    });
+  });
+}
+
 /**
  * Get news articles that were scraped within the last 7 days.
  * The 7-day window is anchored to `created_at` (when our scraper ingested it),
@@ -23,8 +102,10 @@ async function getArticles({ sentiment, search, region, magnitude, country, limi
     .from(TABLE)
     .select('*')
     .neq('impact_score', 0)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false });
+
+  const dbLimit = search ? Math.max(limit, 2000) : limit;
+  query = query.limit(dbLimit);
 
   if (daysLimit) {
     const cutoffDate = new Date(Date.now() - daysLimit * 24 * 60 * 60 * 1000).toISOString();
@@ -56,15 +137,24 @@ async function getArticles({ sentiment, search, region, magnitude, country, limi
     query = query.ilike('region', country);
   }
 
-  // Magnitude filter is handled in memory below to avoid fragile PostgREST nested 'and' inside 'or' syntax.
-
-  if (search) {
-    query = query.or(`title.ilike.%${search}%,snippet.ilike.%${search}%,ai_rationale.ilike.%${search}%,region.ilike.%${search}%,source.ilike.%${search}%`);
-  }
-
   let { data, error } = await query;
   if (error) return { data: [], error };
   data = data || [];
+
+  // Fuzzy match search keyword in memory if provided
+  if (search) {
+    data = data.filter(a => 
+      isFuzzyMatch(a.title, search) ||
+      isFuzzyMatch(a.snippet, search) ||
+      isFuzzyMatch(a.ai_rationale, search) ||
+      isFuzzyMatch(a.region, search) ||
+      isFuzzyMatch(a.source, search)
+    );
+    // Slice to the requested limit if we fetched more elements for the search buffer
+    if (data.length > limit) {
+      data = data.slice(0, limit);
+    }
+  }
 
   // Robust in-memory filtering for magnitude (numeric score threshold or category strings)
   if (magnitude) {
