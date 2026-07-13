@@ -148,7 +148,7 @@ export const AgentChatBubble = () => {
                 viewBox="0 0 12 12"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="absolute top-1.5 left-1.5 text-muted-foreground/40 group-hover:text-primary transition-colors duration-200"
+                className="absolute top-2 left-2 text-primary-foreground/50 group-hover:text-primary-foreground transition-colors duration-200"
               >
                 {/* Diagonal grip lines indicating expandability */}
                 <line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
