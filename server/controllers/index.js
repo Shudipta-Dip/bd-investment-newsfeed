@@ -10,6 +10,8 @@ const { scrapeAll } = require('../services/scraper');
 const { generateExecutiveSummary } = require('../services/aiValidator');
 const { sendAlertEmail } = require('../services/emailService');
 const { runAgent } = require('../services/agentService');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
 /**
  * GET /api/health
@@ -285,6 +287,131 @@ const chatWithAgent = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/diagnose
+ * Tests all configured LLM API keys and returns a status report.
+ * Keys are masked — only the first 8 and last 4 characters are shown.
+ */
+const diagnoseKeys = async (_req, res) => {
+  const mask = (key) => {
+    if (!key) return null;
+    if (key.length <= 12) return key.substring(0, 4) + '...';
+    return key.substring(0, 8) + '...' + key.substring(key.length - 4);
+  };
+
+  const results = {
+    timestamp: new Date().toISOString(),
+    gemini: [],
+    groq: [],
+    deepseek: null,
+    tavily: null,
+    supabase: null,
+  };
+
+  // --- Gemini Keys ---
+  const geminiKeyNames = ['GEMINI_API_KEY_1', 'GEMINI_API_KEY_2', 'GEMINI_API_KEY_3', 'GEMINI_API_KEY'];
+  for (const keyName of geminiKeyNames) {
+    const key = process.env[keyName];
+    const entry = { key: keyName, present: !!key, masked: mask(key), status: 'SKIPPED', error: null };
+    if (key) {
+      try {
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const result = await model.generateContent('Reply with exactly: OK');
+        const text = result.response.text().trim();
+        entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
+        entry.response = text.substring(0, 50);
+      } catch (err) {
+        entry.status = 'FAILED';
+        entry.error = err.message?.substring(0, 200);
+      }
+    }
+    results.gemini.push(entry);
+  }
+
+  // --- Groq Keys ---
+  const groqKeyNames = ['GROQ_API_KEY_1', 'GROQ_API_KEY_2', 'GROQ_API_KEY'];
+  for (const keyName of groqKeyNames) {
+    const key = process.env[keyName];
+    const entry = { key: keyName, present: !!key, masked: mask(key), status: 'SKIPPED', error: null };
+    if (key) {
+      try {
+        const groq = new Groq({ apiKey: key });
+        const completion = await groq.chat.completions.create({
+          messages: [{ role: 'user', content: 'Reply with exactly: OK' }],
+          model: 'llama-3.1-8b-instant',
+          temperature: 0,
+          max_tokens: 10,
+        });
+        const text = (completion.choices[0].message.content || '').trim();
+        entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
+        entry.response = text.substring(0, 50);
+      } catch (err) {
+        entry.status = 'FAILED';
+        entry.error = err.message?.substring(0, 200);
+      }
+    }
+    results.groq.push(entry);
+  }
+
+  // --- DeepSeek ---
+  const dsKey = process.env.DEEPSEEK_API_KEY;
+  results.deepseek = { key: 'DEEPSEEK_API_KEY', present: !!dsKey, masked: mask(dsKey), status: 'SKIPPED', error: null };
+  if (dsKey) {
+    try {
+      const dsResponse = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${dsKey}` },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: 'Reply with exactly: OK' }],
+          temperature: 0,
+          max_tokens: 10
+        })
+      });
+      if (!dsResponse.ok) {
+        const errText = await dsResponse.text();
+        throw new Error(`Status ${dsResponse.status}: ${errText.substring(0, 150)}`);
+      }
+      const dsData = await dsResponse.json();
+      const text = (dsData.choices?.[0]?.message?.content || '').trim();
+      results.deepseek.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
+      results.deepseek.response = text.substring(0, 50);
+    } catch (err) {
+      results.deepseek.status = 'FAILED';
+      results.deepseek.error = err.message?.substring(0, 200);
+    }
+  }
+
+  // --- Tavily ---
+  const tavilyKey = process.env.TAVILY_API_KEY;
+  results.tavily = { key: 'TAVILY_API_KEY', present: !!tavilyKey, masked: mask(tavilyKey), status: tavilyKey ? 'CONFIGURED' : 'NOT_SET' };
+
+  // --- Supabase ---
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+  const isSupaConfigured = supabaseUrl && supabaseKey && supabaseUrl.startsWith('http') && supabaseKey.length > 30;
+  results.supabase = {
+    url_present: !!supabaseUrl,
+    key_present: !!supabaseKey,
+    status: isSupaConfigured ? 'CONFIGURED' : 'NOT_SET',
+    masked_url: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : null,
+  };
+
+  // Summary
+  const healthyGemini = results.gemini.filter(g => g.status === 'HEALTHY').length;
+  const healthyGroq = results.groq.filter(g => g.status === 'HEALTHY').length;
+  results.summary = {
+    gemini: `${healthyGemini}/${results.gemini.filter(g => g.present).length} keys healthy`,
+    groq: `${healthyGroq}/${results.groq.filter(g => g.present).length} keys healthy`,
+    deepseek: results.deepseek.status,
+    tavily: results.tavily.status,
+    supabase: results.supabase.status,
+  };
+
+  res.json({ success: true, data: results });
+};
+
 module.exports = {
   healthCheck,
   getNews,
@@ -296,4 +423,5 @@ module.exports = {
   subscribeAlert,
   unsubscribeAlert,
   chatWithAgent,
+  diagnoseKeys,
 };

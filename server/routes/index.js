@@ -32,6 +32,11 @@ router.post('/alerts/subscribe', controllers.subscribeAlert);
 router.delete('/alerts/unsubscribe', controllers.unsubscribeAlert);
 
 // ---------------------------------------------------------------------------
+// LLM API Key Diagnostics
+// ---------------------------------------------------------------------------
+router.get('/diagnose', controllers.diagnoseKeys);
+
+// ---------------------------------------------------------------------------
 // LangChain Agent Chat
 // ---------------------------------------------------------------------------
 router.post('/chat', controllers.chatWithAgent);

@@ -313,7 +313,59 @@ ${payload}`;
     }
     console.log(`  ✅ Deep-dive complete: ${parsed.length} intelligence notes generated.`);
   } catch (error) {
-    console.error('  ⚠️ Deep-dive error (after retries, non-fatal):', error.message);
+    console.error('  ⚠️ Deep-dive Gemini error (after retries):', error.message);
+
+    // --- DeepSeek Fallback for Global Intelligence Notes ---
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (deepseekKey) {
+      console.log('  🔄 Attempting DeepSeek fallback for global intelligence notes...');
+      try {
+        const dsResponse = await fetch('https://api.deepseek.com/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0,
+            max_tokens: 2048
+          })
+        });
+
+        if (!dsResponse.ok) {
+          const errText = await dsResponse.text();
+          throw new Error(`DeepSeek API error (status ${dsResponse.status}): ${errText}`);
+        }
+
+        const dsData = await dsResponse.json();
+        const dsText = dsData.choices?.[0]?.message?.content || '';
+        const dsParsed = parseJsonArraySafe(dsText);
+
+        if (dsParsed.length === 0) throw new Error('DeepSeek returned no valid array items');
+
+        const articleUrlMap = new Map(articles.map((a, i) => [a.url, i]));
+
+        for (const entry of dsParsed) {
+          if (entry.id >= 0 && entry.id < toAnalyze.length) {
+            const globalArticle = toAnalyze[entry.id];
+            const originalIdx = articleUrlMap.get(globalArticle.url);
+            if (originalIdx !== undefined) {
+              if (entry.rationale) articles[originalIdx].ai_rationale = entry.rationale;
+              if (typeof entry.impact === 'number' && entry.impact >= 0 && entry.impact <= 100) {
+                articles[originalIdx].impact_score = entry.impact;
+              }
+            }
+          }
+        }
+        console.log(`  ✅ DeepSeek fallback complete: ${dsParsed.length} intelligence notes generated.`);
+      } catch (dsError) {
+        console.error('  ❌ DeepSeek fallback also failed:', dsError.message);
+      }
+    } else {
+      console.warn('  ⚠️ No DEEPSEEK_API_KEY configured. Skipping fallback — global articles will have no intelligence notes.');
+    }
   }
 
   return articles;
