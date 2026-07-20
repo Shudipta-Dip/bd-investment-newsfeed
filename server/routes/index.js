@@ -21,9 +21,15 @@ router.get('/stats', controllers.getStats);
 router.get('/executive-summary', controllers.getExecutiveSummary);
 
 // ---------------------------------------------------------------------------
-// RSS Scraper (trigger manually or via scheduled job)
-// ---------------------------------------------------------------------------
 // router.post('/scrape', controllers.scrapeNews); // Disabled for security reasons (run via run_live_scrape.js or cron instead)
+router.post('/scrape', (req, res, next) => {
+  const secretToken = process.env.ALERT_WEBHOOK_SECRET || 'bd-newsfeed-secret-123';
+  const providedToken = req.headers['x-scrape-token'] || req.query.token;
+  if (!providedToken || providedToken !== secretToken) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: Invalid or missing scrape token' });
+  }
+  next();
+}, controllers.scrapeNews);
 
 // ---------------------------------------------------------------------------
 // Alert Subscriptions
