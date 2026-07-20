@@ -15,6 +15,7 @@ const CONTEXT_KEYWORDS = [
 ];
 
 const BUSINESS_KEYWORDS = [
+  // Core economics & finance
   'investment', 'fdi', 'economy', 'economic', 'business', 'trade', 'startup',
   'infrastructure', 'market', 'stock', 'dse', 'bank', 'finance', 'financial',
   'tax', 'revenue', 'export', 'import', 'industry', 'garment', 'rmg', 'textile',
@@ -22,7 +23,23 @@ const BUSINESS_KEYWORDS = [
   'development', 'fund', 'capital', 'investor', 'corporate', 'manufacturing',
   'supply chain', 'deficit', 'inflation', 'gdp', 'reserves', 'remittance',
   'megaproject', 'venture', 'forex', 'commercial', 'real estate', 'tariff',
-  'customs', 'subsidy', 'macroeconomic', 'microeconomic', 'imf', 'world bank'
+  'customs', 'subsidy', 'macroeconomic', 'microeconomic', 'imf', 'world bank',
+  
+  // Expanded commerce & markets
+  'commerce', 'retail', 'wholesale', 'sales', 'profit', 'loss', 'earning', 
+  'earnings', 'fiscal', 'budget', 'monetary', 'loan', 'credit', 'debt', 
+  'lending', 'borrowing', 'interest rate', 'price', 'bond', 'bonds', 'equity', 
+  'shares', 'dividend', 'funding', 'ipo', 'listing', 'joint venture', 'jv', 
+  'partnership', 'mou', 'deal', 'tender', 'procurement', 'acquisition', 'merger',
+
+  // Expanded sectors & industries
+  'agriculture', 'farming', 'crops', 'rice', 'tea', 'fish', 'shrimp', 'poultry', 
+  'livestock', 'apparel', 'spinning', 'weaving', 'footwear', 'shipbuilding', 
+  'cement', 'steel', 'automotive', 'telecom', 'telecommunication', 'mobile', 
+  'operator', 'ict', 'software', 'technology', 'e-commerce', 'fintech', 
+  'pharmaceuticals', 'medicine', 'gas', 'lng', 'coal', 'solar', 'wind', 
+  'electricity', 'utility', 'remittances', 'tourism', 'aviation', 'airlines', 'highway', 
+  'bridge', 'railway', 'metro rail', 'tunnel', 'airport', 'terminal', 'shipping'
 ];
 
 const VIP_KEYWORDS = [
@@ -35,9 +52,12 @@ const BLOCKLIST_KEYWORDS = [
   // Sports
   'cricket', 'shakib', 'football', 'match', 'tournament', 'world cup', 'innings', 
   'wicket', 'goal', 'stadium', 'athlete', 'olympics', 'fifa', 'icc', 'bcci', 'bcb',
+  't20', 'odi', 'test match', 'series', 'bowling', 'batting', 'batsman', 'bowler',
+  'trophy', 'championship', 'playoffs', 'semifinal', 'quarterfinal',
   // Entertainment / Lifestyle
   'actor', 'actress', 'movie', 'film', 'cinema', 'bollywood', 'dhallywood', 
   'song', 'music', 'concert', 'celebrity', 'gossip', 'wedding', 'theater',
+  'drama', 'singer', 'album', 'celebrities', 'lifestyle', 'recipe', 'fashion',
   // Crime & Accidents (Unless tied to economy, best to filter out generic news)
   'murder', 'rape', 'arrest', 'police', 'court', 'sentenced', 'killed', 
   'road crash', 'accident', 'suicide', 'robbery', 'smuggling', 'drugs', 'yaba',
@@ -67,6 +87,14 @@ function isRelevant(title, snippet, region = '') {
     return false;
   }
 
+  // Sports score check (e.g. "34-run win", "5-wicket victory", "beat Zimbabwe by 3 runs", "2-1 victory")
+  // Excludes reports that happen to contain match score formatting unless accompanied by game verb/outcome words
+  if (/\b\d+-run\b/i.test(lowerTitle) || /\b\d+-wicket\b/i.test(lowerTitle) || /\b\d+-\d+\b/i.test(lowerTitle)) {
+    if (/\b(win|victory|defeat|beat|beats|lost|lose|won|won by|won the|level|levels)\b/i.test(lowerTitle)) {
+      return false;
+    }
+  }
+
   const hasContext = CONTEXT_KEYWORDS.some(kw => matchKeyword(lowerTitle, kw) || matchKeyword(lowerSnippet, kw));
   const hasBusiness = BUSINESS_KEYWORDS.some(kw => matchKeyword(lowerTitle, kw) || matchKeyword(lowerSnippet, kw));
   const hasVIP = VIP_KEYWORDS.some(kw => matchKeyword(lowerTitle, kw) || matchKeyword(lowerSnippet, kw));
@@ -80,8 +108,8 @@ function isRelevant(title, snippet, region = '') {
   // For LOCAL (Bangladesh) sources:
   // VIP keywords get an instant pass (these are Bangladesh-specific entities like BIDA, BEZA).
   if (hasVIP) return true;
-  // Otherwise require at least one business or context keyword.
-  return hasContext || hasBusiness;
+  // Otherwise require at least one business keyword (prevents general news/sports from slipping through)
+  return hasBusiness;
 }
 
 // Words that suggest NEGATIVE / CRITICAL sentiment

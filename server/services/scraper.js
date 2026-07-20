@@ -167,6 +167,32 @@ async function scrapeAll() {
       validatedArticles = await generateLocalRationale(validatedArticles);
     }
 
+    // --- Phase 3.7: Rationale-Based Rejection Catch ---
+    // If the AI generated note explicitly states there are no business/economic implications,
+    // we set the impact_score to 0 so that it gets dropped in Phase 4.
+    validatedArticles = validatedArticles.map(art => {
+      const note = (art.ai_rationale || '').toLowerCase();
+      const noImplicationPatterns = [
+        'no direct business',
+        'no business implication',
+        'no economic implication',
+        'no direct economic',
+        'no direct implication',
+        'no implication for business',
+        'no implication for investment',
+        'no investment implication',
+        'no direct impact',
+        'unrelated to business',
+        'unrelated to investment',
+        'no practical business'
+      ];
+      if (noImplicationPatterns.some(p => note.includes(p))) {
+        console.log(`🚫 AI Rationale Reject: Dropping "${art.title}" (Rationale says: "${art.ai_rationale}")`);
+        return { ...art, impact_score: 0 };
+      }
+      return art;
+    });
+
     // --- Phase 4: Deduplicate and Save ---
     const preSaveCount = validatedArticles.length;
     const uniqueMap = new Map();
