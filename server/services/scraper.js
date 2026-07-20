@@ -118,9 +118,13 @@ async function scrapeAll() {
   };
 
   const allArticles = [];
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 5; // Reduced from 20 to 5 to keep memory footprint under Render's 512MB limit
 
   for (let i = 0; i < sources.length; i += BATCH_SIZE) {
+    // Force garbage collection between batches if exposed (useful for memory constraints)
+    if (global.gc) {
+      try { global.gc(); } catch (_) {}
+    }
     const batch = sources.slice(i, i + BATCH_SIZE);
     
     // Process batch concurrently
