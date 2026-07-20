@@ -15,13 +15,33 @@ const { scrapeHTML } = require('./htmlScraper');
 const { validateBatch, deepDiveGlobalArticles, generateLocalRationale } = require('./aiValidator');
 
 const parser = new RSSParser({
-  timeout: 4000, // Reduced to 4s for faster fail-fast on invalid sources
+  timeout: 10000, // Increased to 10s to support slower/distant international feeds
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.5'
   },
 });
+
+/**
+ * Safely extract text from parsed XML fields. Handles both strings and objects/arrays
+ * produced by the XML parser for tags with nested structures.
+ */
+function stringifyRssField(field) {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (typeof field === 'object') {
+    if (field._) return String(field._);
+    if (Array.isArray(field)) {
+      return field.map(stringifyRssField).join(' ').trim();
+    }
+    const keys = Object.keys(field);
+    if (keys.length > 0) {
+      return keys.map(k => stringifyRssField(field[k])).join(' ').trim();
+    }
+  }
+  return String(field);
+}
 
 /**
  * Safely parse a date string and return an ISO string.
@@ -60,8 +80,8 @@ function cleanUrl(urlStr) {
 function filterItems(items, source) {
   const validArticles = [];
   for (const item of items) {
-    const title = item.title || '';
-    const snippet = item.contentSnippet || item.content || item.summary || '';
+    const title = stringifyRssField(item.title);
+    const snippet = stringifyRssField(item.contentSnippet || item.content || item.summary);
     const url = cleanUrl(item.link || item.guid || '');
 
     if (!url) continue;
@@ -75,7 +95,7 @@ function filterItems(items, source) {
       sentiment: tagSentiment(title, snippet),
       impact_score: scoreImpact(title, snippet),
       region: source.region,
-      published_at: parseSafeDate(item.pubDate),
+      published_at: parseSafeDate(stringifyRssField(item.pubDate)),
     });
   }
   return validArticles;
@@ -105,6 +125,30 @@ async function scrapeAll() {
     
     // Process batch concurrently
     const promises = batch.map(async (source) => {
+      // Extract root origin for HTML fallback (e.g. https://example.com/feed -> https://example.com)
+      let fallbackUrl = source.url;
+      try {
+        const parsed = new URL(source.url);
+        fallbackUrl = parsed.origin; // e.g. "https://thefinancialexpress.com.bd"
+      } catch {
+        // If URL is malformed (e.g. "NO_RSS"), fallbackUrl stays as-is
+      }
+
+      // Skip RSS parsing entirely for sources without configured feeds
+      if (!source.url || source.url === 'NO_RSS') {
+        // Go directly to HTML fallback on the homepage
+        try {
+          const htmlItems = await scrapeHTML(fallbackUrl);
+          if (htmlItems.length > 0) {
+            const validArticles = filterItems(htmlItems, source);
+            return { success: true, method: 'html', source, itemsFound: htmlItems.length, articles: validArticles };
+          }
+        } catch (htmlErr) {
+          // HTML fallback also failed
+        }
+        return { success: false, source, error: 'NO_RSS and HTML fallback failed' };
+      }
+
       // Attempt 1: RSS Parser
       try {
         const feed = await parser.parseURL(source.url);
@@ -112,9 +156,9 @@ async function scrapeAll() {
         const validArticles = filterItems(items, source);
         return { success: true, method: 'rss', source, itemsFound: items.length, articles: validArticles };
       } catch (rssErr) {
-        // Attempt 2: HTML Fallback
+        // Attempt 2: HTML Fallback on root origin (not the dead RSS URL)
         try {
-          const htmlItems = await scrapeHTML(source.url);
+          const htmlItems = await scrapeHTML(fallbackUrl);
           if (htmlItems.length > 0) {
             const validArticles = filterItems(htmlItems, source);
             return { success: true, method: 'html', source, itemsFound: htmlItems.length, articles: validArticles };
