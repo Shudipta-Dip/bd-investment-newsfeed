@@ -24,6 +24,7 @@ interface SummaryStatsProps {
 }
 
 export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
+  const displayRegions = regions.length > 0 ? regions : ["Bangladesh", "Asia-Pacific", "Global"];
   const containerRef = useRef<HTMLDivElement>(null);
   const [globeSize, setGlobeSize] = useState(240);
 
@@ -171,11 +172,9 @@ export const SummaryStats = ({ regions = [] }: SummaryStatsProps) => {
           </div>
 
           {/* Right side: Animated Globe (desktop only, centered in the remaining blank space, custom size fit) */}
-          {regions.length > 0 && (
-            <div className="hidden lg:flex items-center justify-center flex-grow self-stretch py-0">
-              <GlobePulse regions={regions} size={400} speed={0.0025} />
-            </div>
-          )}
+          <div className="hidden lg:flex items-center justify-center flex-grow self-stretch py-0">
+            <GlobePulse regions={displayRegions} size={400} speed={0.0025} />
+          </div>
         </div>
       </div>
 

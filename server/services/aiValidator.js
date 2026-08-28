@@ -139,7 +139,7 @@ function getRotatedModel(purpose = 'validation') {
   currentKeyIndex++;
 
   const genAI = new GoogleGenerativeAI(keys[keyIdx]);
-  return genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  return genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 }
 
 // ============================================================================
@@ -173,18 +173,17 @@ EXCLUDE: religion, general politics without economic impact, crime, entertainmen
 `;
 
 /**
- * Validates, classifies, and scores a batch of articles using Groq (Llama-3-8b).
- * High-speed validation offloaded to Groq to save Gemini quota.
+ * Validate a batch of articles against BIDA criteria using Groq.
+ * Falls back across active models (llama-3.3-70b-versatile, llama3-8b-8192) to ensure high availability.
  */
-async function validateBatch(articles) {
-  if (articles.length === 0) return articles;
+async function validateBatch(articles, chunkSize = 25) {
+  if (!articles || articles.length === 0) return [];
 
   const validated = [];
-  const chunkSize = 20;
+  const groqModels = ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'llama-3.1-8b-instant'];
 
   for (let i = 0; i < articles.length; i += chunkSize) {
     const chunk = articles.slice(i, i + chunkSize);
-    // Grab a rotated key per chunk to spread TPM across multiple accounts
     const groq = getRotatedGroq();
     if (!groq) {
         console.warn('⚠️ No Groq client. Skipping chunk mapping.');
@@ -205,12 +204,28 @@ HEADLINES:
 ${payload}`;
 
     try {
-      const completion = await retryWithBackoff(() => groq.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'llama-3.1-8b-instant',
-        temperature: 0,
-        max_tokens: 1000,
-      }));
+      let completion = null;
+      let lastErr = null;
+
+      for (const modelName of groqModels) {
+        try {
+          completion = await retryWithBackoff(() => groq.chat.completions.create({
+            messages: [{ role: 'user', content: prompt }],
+            model: modelName,
+            temperature: 0,
+            max_tokens: 1000,
+          }));
+          if (completion) break;
+        } catch (err) {
+          lastErr = err;
+          if (err.message && (err.message.includes('404') || err.message.includes('model_not_found'))) {
+            continue; // try next model in fallback list
+          }
+          throw err;
+        }
+      }
+
+      if (!completion) throw lastErr || new Error('All Groq validation models failed');
       
       const text = completion.choices[0].message.content;
       const parsed = parseJsonArraySafe(text);

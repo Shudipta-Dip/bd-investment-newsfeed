@@ -316,7 +316,7 @@ const diagnoseKeys = async (_req, res) => {
     if (key) {
       try {
         const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const result = await model.generateContent('Reply with exactly: OK');
         const text = result.response.text().trim();
         entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
@@ -331,24 +331,29 @@ const diagnoseKeys = async (_req, res) => {
 
   // --- Groq Keys ---
   const groqKeyNames = ['GROQ_API_KEY_1', 'GROQ_API_KEY_2', 'GROQ_API_KEY'];
+  const groqModelsToTest = ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'llama-3.1-8b-instant'];
   for (const keyName of groqKeyNames) {
     const key = process.env[keyName];
     const entry = { key: keyName, present: !!key, masked: mask(key), status: 'SKIPPED', error: null };
     if (key) {
-      try {
-        const groq = new Groq({ apiKey: key });
-        const completion = await groq.chat.completions.create({
-          messages: [{ role: 'user', content: 'Reply with exactly: OK' }],
-          model: 'llama-3.1-8b-instant',
-          temperature: 0,
-          max_tokens: 10,
-        });
-        const text = (completion.choices[0].message.content || '').trim();
-        entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
-        entry.response = text.substring(0, 50);
-      } catch (err) {
-        entry.status = 'FAILED';
-        entry.error = err.message?.substring(0, 200);
+      const groq = new Groq({ apiKey: key });
+      for (const mName of groqModelsToTest) {
+        try {
+          const completion = await groq.chat.completions.create({
+            messages: [{ role: 'user', content: 'Reply with exactly: OK' }],
+            model: mName,
+            temperature: 0,
+            max_tokens: 10,
+          });
+          const text = (completion.choices[0].message.content || '').trim();
+          entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
+          entry.response = text.substring(0, 50);
+          entry.active_model = mName;
+          break;
+        } catch (err) {
+          entry.status = 'FAILED';
+          entry.error = err.message?.substring(0, 200);
+        }
       }
     }
     results.groq.push(entry);
