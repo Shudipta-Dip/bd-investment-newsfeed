@@ -180,7 +180,14 @@ async function validateBatch(articles, chunkSize = 25) {
   if (!articles || articles.length === 0) return [];
 
   const validated = [];
-  const groqModels = ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'llama-3.1-8b-instant'];
+  const groqModels = [
+    'llama-3.2-3b-preview',
+    'llama-3.2-1b-preview',
+    'llama-3.2-11b-vision-preview',
+    'deepseek-r1-distill-llama-70b',
+    'llama-3.3-70b-specdec',
+    'llama-3.3-70b-versatile'
+  ];
 
   for (let i = 0; i < articles.length; i += chunkSize) {
     const chunk = articles.slice(i, i + chunkSize);

@@ -341,7 +341,14 @@ const diagnoseKeys = async (_req, res) => {
 
   // --- Groq Keys ---
   const groqKeyNames = ['GROQ_API_KEY_1', 'GROQ_API_KEY_2', 'GROQ_API_KEY'];
-  const groqModelsToTest = ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
+  const groqModelsToTest = [
+    'llama-3.2-3b-preview',
+    'llama-3.2-1b-preview',
+    'llama-3.2-11b-vision-preview',
+    'deepseek-r1-distill-llama-70b',
+    'llama-3.3-70b-specdec',
+    'llama-3.3-70b-versatile'
+  ];
   for (const keyName of groqKeyNames) {
     const key = process.env[keyName];
     const entry = { key: keyName, present: !!key, masked: mask(key), status: 'SKIPPED', error: null };
