@@ -141,6 +141,35 @@ async function getArticles({ sentiment, search, region, magnitude, country, limi
   if (error) return { data: [], error };
   data = data || [];
 
+  // Fallback: If 7-day cutoff returns 0 articles, query historical archive to ensure feed is never blank
+  if (data.length === 0 && daysLimit) {
+    let fallbackQuery = supabase
+      .from(TABLE)
+      .select('*')
+      .neq('impact_score', 0)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (sentiment) {
+      const sentiments = sentiment.split(',').map(s => s.trim()).filter(Boolean);
+      if (sentiments.length === 1) fallbackQuery = fallbackQuery.eq('sentiment', sentiments[0]);
+      else if (sentiments.length > 1) fallbackQuery = fallbackQuery.in('sentiment', sentiments);
+    }
+
+    if (region) {
+      const regions = region.split(',').map(r => r.trim().toLowerCase());
+      if (regions.includes('local') && !regions.includes('global')) fallbackQuery = fallbackQuery.eq('region', 'Bangladesh');
+      else if (regions.includes('global') && !regions.includes('local')) fallbackQuery = fallbackQuery.neq('region', 'Bangladesh');
+    }
+
+    if (country) fallbackQuery = fallbackQuery.ilike('region', country);
+
+    const fallbackRes = await fallbackQuery;
+    if (fallbackRes.data && fallbackRes.data.length > 0) {
+      data = fallbackRes.data;
+    }
+  }
+
   // Fuzzy match search keyword in memory if provided
   if (search) {
     data = data.filter(a => 
@@ -215,9 +244,15 @@ async function createArticle(article) {
 async function createManyArticles(articles) {
   if (!supabase) return { data: null, error: 'Database not configured' };
 
+  // Explicitly touch created_at timestamp on upsert so articles refresh into 7-day window
+  const payload = articles.map(a => ({
+    ...a,
+    created_at: new Date().toISOString()
+  }));
+
   const { data, error } = await supabase
     .from(TABLE)
-    .upsert(articles, { onConflict: 'url' })
+    .upsert(payload, { onConflict: 'url' })
     .select();
 
   return { data, error };
