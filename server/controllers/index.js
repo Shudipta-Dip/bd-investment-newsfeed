@@ -310,20 +310,30 @@ const diagnoseKeys = async (_req, res) => {
 
   // --- Gemini Keys ---
   const geminiKeyNames = ['GEMINI_API_KEY_1', 'GEMINI_API_KEY_2', 'GEMINI_API_KEY_3', 'GEMINI_API_KEY'];
+  const geminiModelsToTest = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash-exp', 'gemini-pro'];
   for (const keyName of geminiKeyNames) {
     const key = process.env[keyName];
     const entry = { key: keyName, present: !!key, masked: mask(key), status: 'SKIPPED', error: null };
     if (key) {
-      try {
-        const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent('Reply with exactly: OK');
-        const text = result.response.text().trim();
-        entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
-        entry.response = text.substring(0, 50);
-      } catch (err) {
-        entry.status = 'FAILED';
-        entry.error = err.message?.substring(0, 200);
+      const genAI = new GoogleGenerativeAI(key);
+      const errors = [];
+      for (const mName of geminiModelsToTest) {
+        try {
+          const model = genAI.getGenerativeModel({ model: mName });
+          const result = await model.generateContent('Reply with exactly: OK');
+          const text = result.response.text().trim();
+          entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
+          entry.response = text.substring(0, 50);
+          entry.active_model = mName;
+          entry.error = null;
+          break;
+        } catch (err) {
+          entry.status = 'FAILED';
+          errors.push(`${mName}: ${err.message?.substring(0, 100)}`);
+        }
+      }
+      if (entry.status === 'FAILED') {
+        entry.error = errors.join(' | ');
       }
     }
     results.gemini.push(entry);
@@ -331,12 +341,13 @@ const diagnoseKeys = async (_req, res) => {
 
   // --- Groq Keys ---
   const groqKeyNames = ['GROQ_API_KEY_1', 'GROQ_API_KEY_2', 'GROQ_API_KEY'];
-  const groqModelsToTest = ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'llama-3.1-8b-instant'];
+  const groqModelsToTest = ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
   for (const keyName of groqKeyNames) {
     const key = process.env[keyName];
     const entry = { key: keyName, present: !!key, masked: mask(key), status: 'SKIPPED', error: null };
     if (key) {
       const groq = new Groq({ apiKey: key });
+      const errors = [];
       for (const mName of groqModelsToTest) {
         try {
           const completion = await groq.chat.completions.create({
@@ -349,11 +360,15 @@ const diagnoseKeys = async (_req, res) => {
           entry.status = text.toLowerCase().includes('ok') ? 'HEALTHY' : 'UNEXPECTED_RESPONSE';
           entry.response = text.substring(0, 50);
           entry.active_model = mName;
+          entry.error = null;
           break;
         } catch (err) {
           entry.status = 'FAILED';
-          entry.error = err.message?.substring(0, 200);
+          errors.push(`${mName}: ${err.message?.substring(0, 100)}`);
         }
+      }
+      if (entry.status === 'FAILED') {
+        entry.error = errors.join(' | ');
       }
     }
     results.groq.push(entry);
